@@ -26,6 +26,7 @@
 #define mainGENERIC_STACK_SIZE ((unsigned short)2560)
 
 static TaskHandle_t RunningDisplayTask = NULL;
+static SemaphoreHandle_t ScreenLock = NULL;
 
 typedef struct buttons_buffer {
 	unsigned char buttons[SDL_NUM_SCANCODES];
@@ -42,6 +43,16 @@ void xGetButtonInput(void)
 	}
 }
 
+void writeTextOnScreen(char *message) {
+	sprintf(message, "Hang loose or press [Q] to quit!"); // 32 characters
+
+	static int messageWidth = 0;
+	if (!tumGetTextSize(message, &messageWidth, NULL)) {
+		tumDrawText(message, SCREEN_CENTER.x - messageWidth / 2,
+					SCREEN_HEIGHT - 40, Black);
+	}
+}
+
 #define KEYCODE(CHAR) SDL_SCANCODE_##CHAR
 
 #define DISTANCE_TO_TRIANGLE 150
@@ -49,6 +60,8 @@ void xGetButtonInput(void)
 #define HEIGHT_SQUARE 80
 #define HEIGHT_TRIANGLE 80
 #define TIME_PERIOD 5000
+#define DISTANCE_TO_BORDER 35
+#define MOVING_MESSAGE_SPEED 100
 
 void vRunningDisplayTask(void *pvParameters)
 {
@@ -70,6 +83,20 @@ void vRunningDisplayTask(void *pvParameters)
     Triangle_t triangle;
     Triangle__init(&triangle, SCREEN_CENTER, HEIGHT_TRIANGLE, Magenta);
 
+	//Create texts
+	static char bottomText[50];
+	sprintf(bottomText, "Hang loose or press [Q] to quit!"); // 32 characters
+	Message_t bottomMessage;
+	Message__init(&(bottomMessage), (coord_t) {SCREEN_CENTER.x, SCREEN_HEIGHT - DISTANCE_TO_BORDER},
+				  bottomText, Black);
+
+	static char topText[50];
+	sprintf(topText, "Hello, I can move!");
+	Message_t topMessage;
+	Message__init(&(topMessage), (coord_t) {SCREEN_CENTER.x, DISTANCE_TO_BORDER},
+				  topText, Black);
+
+
 	// Needed such that Gfx library knows which thread controlls drawing
 	// Only one thread can call tumDrawUpdateScreen while and thread can call
 	// the drawing functions to draw objects. This is a limitation of the SDL
@@ -77,8 +104,7 @@ void vRunningDisplayTask(void *pvParameters)
 	tumDrawBindThread();
 
 	while (1) {
-		tumEventFetchEvents(
-			FETCH_EVENT_NONBLOCK); // Query events backend for new events, ie. button presses
+		tumEventFetchEvents(FETCH_EVENT_NONBLOCK); // Query events backend for new events, ie. button presses
 		xGetButtonInput(); // Update global input
 
         xLastWakeTime = xTaskGetTickCount();
@@ -88,16 +114,18 @@ void vRunningDisplayTask(void *pvParameters)
 		// resource and given back when you're finished. If the mutex is not
 		// given back then no other task can access the reseource.
 		if (xSemaphoreTake(buttons.lock, 0) == pdTRUE) {
-			if (buttons.buttons[KEYCODE(
-				    Q)]) { // Equiv to SDL_SCANCODE_Q
+			if (buttons.buttons[KEYCODE(Q)]) { // Equiv to SDL_SCANCODE_Q
 				exit(EXIT_SUCCESS);
 			}
 			xSemaphoreGive(buttons.lock);
 		}
 
+		//Screen manipulatoins
+		xSemaphoreTake(ScreenLock, portMAX_DELAY);
+
 		tumDrawClear(White); // Clear screen
 
-        //Update shape positions
+        //Update shape and message positions
         PositionProperties__setSpeedMoveOnCircle(&(circle._positionProperties),
 			DISTANCE_TO_TRIANGLE, M_PI, TIME_PERIOD, xLastWakeTime - initialWakeTime);
         PositionProperties__updatePosition(&(circle._positionProperties),
@@ -109,6 +137,12 @@ void vRunningDisplayTask(void *pvParameters)
                                            xLastWakeTime - prevWakeTime);
 		Rectangle__updateCorner(&rectangle);
 
+		PositionProperties__moveVetically(&(topMessage._positionProperties), MOVING_MESSAGE_SPEED,
+										  DISTANCE_TO_BORDER);
+		PositionProperties__updatePosition(&(topMessage._positionProperties),
+										   xLastWakeTime - prevWakeTime);
+		Message__updateCorner(&topMessage);
+
 
         // Draw updated shapes
 		tumDrawCircle(circle._positionProperties._x, circle._positionProperties._y,
@@ -119,11 +153,22 @@ void vRunningDisplayTask(void *pvParameters)
 
 		tumDrawTriangle(triangle._corners, Magenta);
 
+		
+		// Write text
+		tumDrawText(bottomMessage._text, bottomMessage._topLeftCorner.x,
+					bottomMessage._topLeftCorner.y, bottomMessage._positionProperties._color);
 
-		tumDrawUpdateScreen(); // Refresh the screen to draw string
+		tumDrawText(topMessage._text, topMessage._topLeftCorner.x,
+					topMessage._topLeftCorner.y, topMessage._positionProperties._color);
+
+
+		tumDrawUpdateScreen(); // Refresh the screen
+							   // Everything written on the screen before landet in some kind of back buffer
+
+		xSemaphoreGive(ScreenLock);
 
 		// Basic sleep of 1000 milliseconds
-		vTaskDelay(portTICK_PERIOD_MS * 10);
+		vTaskDelay(portTICK_PERIOD_MS * 20);
         prevWakeTime = xLastWakeTime;
 	}
 }
@@ -155,18 +200,26 @@ int main(int argc, char *argv[])
 		goto err_buttons_lock;
 	}
 
+	ScreenLock = xSemaphoreCreateMutex();
+	if (!ScreenLock) {
+		PRINT_ERROR("Failed to create screen lock");
+		goto err_screen_lock;
+	}
+
 	if (xTaskCreate(vRunningDisplayTask, "RunningDisplayTask",
 			mainGENERIC_STACK_SIZE * 2, NULL, mainGENERIC_PRIORITY,
 			&RunningDisplayTask) != pdPASS) {
-		goto err_demotask;
+		goto err_runningdisplaytask;
 	}
 
 	vTaskStartScheduler();
 
 	return EXIT_SUCCESS;
 
-err_demotask:
-	vSemaphoreDelete(buttons.lock);
+err_runningdisplaytask:
+	vSemaphoreDelete(ScreenLock);
+err_screen_lock: // Everything created before has to be deleted. The item calling the error
+	vSemaphoreDelete(buttons.lock); // routin doesn't because it was not actually created.
 err_buttons_lock:
 	tumSoundExit();
 err_init_audio:
