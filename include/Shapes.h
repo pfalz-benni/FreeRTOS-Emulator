@@ -6,6 +6,9 @@
  * from TUM_Draw. Created for the exercise part of the ESPL.
  */
 
+#include <math.h>
+#include <stdio.h>
+
 #include "TUM_Draw.h"
 
 /**
@@ -39,10 +42,19 @@ typedef struct PositionProperties {
     unsigned int _color; /**< Hex RGB colour of the ball */
 } PositionProperties_t;
 
-int MovementProperties__init(PositionProperties_t *this, PIXELS x,
+int PositionProperties__init(PositionProperties_t *this, PIXELS x,
 			 PIXELS y, float speed, unsigned int color);
 
-// ------------------------------------
+int PositionProperties__setPosition(PositionProperties_t *this, float f_x, float f_y);
+int PositionProperties__setSpeed(PositionProperties_t *this, float dx, float dy);
+
+int PositionProperties__updatePosition(PositionProperties_t *this, unsigned int timePassed_ms);
+
+int PositionProperties__setSpeedMoveOnCircle(PositionProperties_t *this, PIXELS radius, double phase,
+                                     unsigned int timePeriod_ms, unsigned int timePassedinTotal_ms);
+
+void PositionProperties__printPositionAndSpeed(PositionProperties_t *this);
+// -------------------------------------
 typedef struct Circle {
 	PositionProperties_t _positionProperties;
 	PIXELS _radius;
@@ -60,6 +72,8 @@ typedef struct Rectangle {
 } Rectangle_t;
 
 int Rectangle__init(Rectangle_t *this, coord_t center, PIXELS width, PIXELS height, unsigned int color);
+
+int Rectangle__updateCorner(Rectangle_t *this);
 
 // -------------------------------------
 typedef struct Triangle {

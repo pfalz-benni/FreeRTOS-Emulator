@@ -44,10 +44,31 @@ void xGetButtonInput(void)
 
 #define KEYCODE(CHAR) SDL_SCANCODE_##CHAR
 
+#define DISTANCE_TO_TRIANGLE 150
+#define RADIUS_CIRCLE 50
+#define HEIGHT_SQUARE 80
+#define HEIGHT_TRIANGLE 80
+#define TIME_PERIOD 5000
 
 void vRunningDisplayTask(void *pvParameters)
 {
 	// Task initializations:
+    TickType_t xLastWakeTime, prevWakeTime, initialWakeTime;
+    xLastWakeTime = xTaskGetTickCount();
+    prevWakeTime = xLastWakeTime;
+    initialWakeTime = xLastWakeTime;
+
+    // Create three shapes
+    Circle_t circle;
+    Circle__init(&circle, (coord_t) {SCREEN_CENTER.x - DISTANCE_TO_TRIANGLE, SCREEN_CENTER.y},
+                    RADIUS_CIRCLE, TUMBlue);
+
+    Rectangle_t rectangle;
+    Rectangle__init(&rectangle, (coord_t) {SCREEN_CENTER.x + DISTANCE_TO_TRIANGLE, SCREEN_CENTER.y}, 
+                    HEIGHT_SQUARE, HEIGHT_SQUARE, Olive);
+
+    Triangle_t triangle;
+    Triangle__init(&triangle, SCREEN_CENTER, HEIGHT_TRIANGLE, Magenta);
 
 	// Needed such that Gfx library knows which thread controlls drawing
 	// Only one thread can call tumDrawUpdateScreen while and thread can call
@@ -59,6 +80,8 @@ void vRunningDisplayTask(void *pvParameters)
 		tumEventFetchEvents(
 			FETCH_EVENT_NONBLOCK); // Query events backend for new events, ie. button presses
 		xGetButtonInput(); // Update global input
+
+        xLastWakeTime = xTaskGetTickCount();
 
 		// `buttons` is a global shared variable and as such needs to be
 		// guarded with a mutex, mutex must be obtained before accessing the
@@ -74,29 +97,34 @@ void vRunningDisplayTask(void *pvParameters)
 
 		tumDrawClear(White); // Clear screen
 
+        //Update shape positions
+        PositionProperties__setSpeedMoveOnCircle(&(circle._positionProperties),
+			DISTANCE_TO_TRIANGLE, M_PI, TIME_PERIOD, xLastWakeTime - initialWakeTime);
+        PositionProperties__updatePosition(&(circle._positionProperties),
+                                           xLastWakeTime - prevWakeTime);
 
-        // Create shape objects and draw them afterwards
-        Circle_t circle;
-        Circle__init(&circle, (coord_t) {SCREEN_CENTER.x - 150, SCREEN_CENTER.y},
-                     50, TUMBlue);
+        PositionProperties__setSpeedMoveOnCircle(&(rectangle._positionProperties),
+			DISTANCE_TO_TRIANGLE, 0, TIME_PERIOD, xLastWakeTime - initialWakeTime);
+        PositionProperties__updatePosition(&(rectangle._positionProperties),
+                                           xLastWakeTime - prevWakeTime);
+		Rectangle__updateCorner(&rectangle);
+
+
+        // Draw updated shapes
 		tumDrawCircle(circle._positionProperties._x, circle._positionProperties._y,
                       circle._radius, circle._positionProperties._color);
 
-        Rectangle_t rectangle;
-        Rectangle__init(&rectangle, (coord_t) {SCREEN_CENTER.x + 150, SCREEN_CENTER.y}, 
-                        80, 80, Olive);
         tumDrawFilledBox(rectangle._topLeftCorner.x, rectangle._topLeftCorner.y,
                    rectangle._width, rectangle._height, rectangle._positionProperties._color);
 
-		Triangle_t triangle;
-		Triangle__init(&triangle, SCREEN_CENTER, 80, Magenta);
 		tumDrawTriangle(triangle._corners, Magenta);
 
 
 		tumDrawUpdateScreen(); // Refresh the screen to draw string
 
 		// Basic sleep of 1000 milliseconds
-		vTaskDelay((TickType_t)1000);
+		vTaskDelay(portTICK_PERIOD_MS * 10);
+        prevWakeTime = xLastWakeTime;
 	}
 }
 
@@ -127,7 +155,7 @@ int main(int argc, char *argv[])
 		goto err_buttons_lock;
 	}
 
-	if (xTaskCreate(vRunningDisplayTask, "DemoTask",
+	if (xTaskCreate(vRunningDisplayTask, "RunningDisplayTask",
 			mainGENERIC_STACK_SIZE * 2, NULL, mainGENERIC_PRIORITY,
 			&RunningDisplayTask) != pdPASS) {
 		goto err_demotask;
