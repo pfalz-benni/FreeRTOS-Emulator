@@ -44,17 +44,6 @@ void xGetButtonInput(void)
 
 #define KEYCODE(CHAR) SDL_SCANCODE_##CHAR
 
-// Positions
-#define TRIANGLE_TOP_CORNER                                                    \
-	(coord_t)                                                              \
-	{                                                                      \
-		SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 20                       \
-	}
-#define CIRCLE_CENTER                                                          \
-	(coord_t)                                                              \
-	{                                                                      \
-		SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2                      \
-	}
 
 void vRunningDisplayTask(void *pvParameters)
 {
@@ -85,24 +74,24 @@ void vRunningDisplayTask(void *pvParameters)
 
 		tumDrawClear(White); // Clear screen
 
-		tumDrawCircle(CIRCLE_CENTER.x, CIRCLE_CENTER.y, 50, TUMBlue);
 
-		TriangleCoords_t triangle;
-		TriangleCoords__init(&triangle, SCREEN_CENTER, 80);
-		coord_t triangleCoords[3] = { triangle._topCorner,
-					      triangle._leftCorner,
-					      triangle._rightCorner };
-		tumDrawTriangle(triangleCoords, Magenta);
+        // Create shape objects and draw them afterwards
+        Circle_t circle;
+        Circle__init(&circle, (coord_t) {SCREEN_CENTER.x - 150, SCREEN_CENTER.y},
+                     50, TUMBlue);
+		tumDrawCircle(circle._positionProperties._x, circle._positionProperties._y,
+                      circle._radius, circle._positionProperties._color);
 
-		// // Get the width of the string on the screen so we can center it
-		// // Returns 0 if width was successfully obtained
-		// if (!tumGetTextSize((char *)our_time_string,
-		//                     &our_time_strings_width, NULL))
-		//     tumDrawText(our_time_string,
-		//                 SCREEN_WIDTH / 2 -
-		//                 our_time_strings_width / 2,
-		//                 SCREEN_HEIGHT / 2 - DEFAULT_FONT_SIZE / 2,
-		//                 TUMBlue);
+        Rectangle_t rectangle;
+        Rectangle__init(&rectangle, (coord_t) {SCREEN_CENTER.x + 150, SCREEN_CENTER.y}, 
+                        80, 80, Olive);
+        tumDrawFilledBox(rectangle._topLeftCorner.x, rectangle._topLeftCorner.y,
+                   rectangle._width, rectangle._height, rectangle._positionProperties._color);
+
+		Triangle_t triangle;
+		Triangle__init(&triangle, SCREEN_CENTER, 80, Magenta);
+		tumDrawTriangle(triangle._corners, Magenta);
+
 
 		tumDrawUpdateScreen(); // Refresh the screen to draw string
 
