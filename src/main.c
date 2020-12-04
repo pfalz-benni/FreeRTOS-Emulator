@@ -72,29 +72,29 @@ void vRunningDisplayTask(void *pvParameters)
     initialWakeTime = xLastWakeTime;
 
     // Create three shapes
-    Circle_t circle;
+    Circle_h_t circle;
     Circle__init(&circle, (coord_t) {SCREEN_CENTER.x - DISTANCE_TO_TRIANGLE, SCREEN_CENTER.y},
                     RADIUS_CIRCLE, TUMBlue);
 
-    Rectangle_t rectangle;
-    Rectangle__init(&rectangle, (coord_t) {SCREEN_CENTER.x + DISTANCE_TO_TRIANGLE, SCREEN_CENTER.y}, 
-                    HEIGHT_SQUARE, HEIGHT_SQUARE, Olive);
+    // Rectangle_h_t rectangle;
+    // Rectangle__init(&rectangle, (coord_t) {SCREEN_CENTER.x + DISTANCE_TO_TRIANGLE, SCREEN_CENTER.y}, 
+    //                 HEIGHT_SQUARE, HEIGHT_SQUARE, Olive);
 
-    Triangle_t triangle;
-    Triangle__init(&triangle, SCREEN_CENTER, HEIGHT_TRIANGLE, Magenta);
+    // Triangle_h_t triangle;
+    // Triangle__init(&triangle, SCREEN_CENTER, HEIGHT_TRIANGLE, Magenta);
 
-	//Create texts
-	static char bottomText[50];
-	sprintf(bottomText, "Hang loose or press [Q] to quit!"); // 32 characters
-	Message_t bottomMessage;
-	Message__init(&(bottomMessage), (coord_t) {SCREEN_CENTER.x, SCREEN_HEIGHT - DISTANCE_TO_BORDER},
-				  bottomText, Black);
+	// //Create texts
+	// static char bottomText[50];
+	// sprintf(bottomText, "Hang loose or press [Q] to quit!"); // 32 characters
+	// Message_h_t bottomMessage;
+	// Message__init(&(bottomMessage), (coord_t) {SCREEN_CENTER.x, SCREEN_HEIGHT - DISTANCE_TO_BORDER},
+	// 			  bottomText, Black);
 
-	static char topText[50];
-	sprintf(topText, "Hello, I can move!");
-	Message_t topMessage;
-	Message__init(&(topMessage), (coord_t) {SCREEN_CENTER.x, DISTANCE_TO_BORDER},
-				  topText, Black);
+	// static char topText[50];
+	// sprintf(topText, "Hello, I can move!");
+	// Message_h_t topMessage;
+	// Message__init(&(topMessage), (coord_t) {SCREEN_CENTER.x, DISTANCE_TO_BORDER},
+	// 			  topText, Black);
 
 
 	// Needed such that Gfx library knows which thread controlls drawing
@@ -126,40 +126,50 @@ void vRunningDisplayTask(void *pvParameters)
 		tumDrawClear(White); // Clear screen
 
         //Update shape and message positions
-        PositionProperties__setSpeedMoveOnCircle(&(circle._positionProperties),
-			DISTANCE_TO_TRIANGLE, M_PI, TIME_PERIOD, xLastWakeTime - initialWakeTime);
-        PositionProperties__updatePosition(&(circle._positionProperties),
-                                           xLastWakeTime - prevWakeTime);
+        // PositionProperties__setSpeedMoveOnCircle(Circle__getPositionProperties(&circle),
+		// 	DISTANCE_TO_TRIANGLE, M_PI, TIME_PERIOD, xLastWakeTime - initialWakeTime);
+        // PositionProperties__updatePosition(Circle__getPositionProperties(&circle),
+        //                                    xLastWakeTime - prevWakeTime);
 
-        PositionProperties__setSpeedMoveOnCircle(&(rectangle._positionProperties),
-			DISTANCE_TO_TRIANGLE, 0, TIME_PERIOD, xLastWakeTime - initialWakeTime);
-        PositionProperties__updatePosition(&(rectangle._positionProperties),
-                                           xLastWakeTime - prevWakeTime);
-		Rectangle__updateCorner(&rectangle);
 
-		PositionProperties__moveVetically(&(topMessage._positionProperties), MOVING_MESSAGE_SPEED,
-										  DISTANCE_TO_BORDER);
-		PositionProperties__updatePosition(&(topMessage._positionProperties),
-										   xLastWakeTime - prevWakeTime);
-		Message__updateCorner(&topMessage);
+        // PositionProperties__setSpeedMoveOnCircle(Rectangle__getPositionProperties(&rectangle),
+		// 	DISTANCE_TO_TRIANGLE, 0, TIME_PERIOD, xLastWakeTime - initialWakeTime);
+        // PositionProperties__updatePosition(Rectangle__getPositionProperties(&rectangle),
+        //                                    xLastWakeTime - prevWakeTime);
+		// Rectangle__updateCorner(&rectangle);
+
+
+		// PositionProperties__moveVetically(Message__getPositionProperties(&topMessage), MOVING_MESSAGE_SPEED,
+		// 								  DISTANCE_TO_BORDER);
+		// PositionProperties__updatePosition(Message__getPositionProperties(&topMessage),
+		// 								   xLastWakeTime - prevWakeTime);
+		// Message__updateCorner(&topMessage);
 
 
         // Draw updated shapes
-		tumDrawCircle(circle._positionProperties._x, circle._positionProperties._y,
-                      circle._radius, circle._positionProperties._color);
+		// tumDrawCircle(PositionProperties__getX(Circle__getPositionProperties(&circle)),
+		// 			  PositionProperties__getY(Circle__getPositionProperties(&circle)),
+		// 			  Circle__getRadius(&circle),
+		// 			  PositionProperties__getColor(Circle__getPositionProperties(&circle)));
 
-        tumDrawFilledBox(rectangle._topLeftCorner.x, rectangle._topLeftCorner.y,
-                   rectangle._width, rectangle._height, rectangle._positionProperties._color);
+		// tumDrawFilledBox(PositionProperties__getX(Rectangle__getPositionProperties(&rectangle)),
+		// 				 PositionProperties__getY(Rectangle__getPositionProperties(&rectangle)),
+		// 				 Rectangle__getWidth(&rectangle),
+		// 				 Rectangle__getHeight(&circle),
+		// 				 PositionProperties__getColor(Rectangle__getPositionProperties(&rectangle)));
 
-		tumDrawTriangle(triangle._corners, Magenta);
+		// tumDrawTriangle(Triangle__getCorners(&triangle),
+		// 				PositionProperties__getColor(Triangle__getPositionProperties(&triangle)));
 
 		
 		// Write text
-		tumDrawText(bottomMessage._text, bottomMessage._topLeftCorner.x,
-					bottomMessage._topLeftCorner.y, bottomMessage._positionProperties._color);
+		// tumDrawText(Message__getText(&bottomMessage), Message__getTopLeftCorner(&bottomMessage).x,
+		// 			Message__getTopLeftCorner(&bottomMessage).y,
+		// 			PositionProperties__getColor(Message__getPositionProperties(&bottomMessage)));
 
-		tumDrawText(topMessage._text, topMessage._topLeftCorner.x,
-					topMessage._topLeftCorner.y, topMessage._positionProperties._color);
+		// tumDrawText(Message__getText(&topMessage), Message__getTopLeftCorner(&topMessage).x,
+		// 			Message__getTopLeftCorner(&topMessage).y,
+		// 			PositionProperties__getColor(Message__getPositionProperties(&topMessage)));
 
 
 		tumDrawUpdateScreen(); // Refresh the screen

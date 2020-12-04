@@ -7,48 +7,53 @@
  * Created for the exercise part of the ESPL.
  */
 
+#ifndef __SHAPES_H__
+#define __SHAPES_H__
+
 #include "TUM_Draw.h"
 #include "PositionProperties.h"
 
-typedef struct Circle {
-	PositionProperties_t _positionProperties;
-	PIXELS _radius;
-} Circle_t;
+typedef void *Circle_h_t;
 
-int Circle__init(Circle_t *this, coord_t center, PIXELS radius, unsigned int color);
+int Circle__init(Circle_h_t *handle, coord_t center, PIXELS radius, unsigned int color);
 
-// -------------------------------------
-
-typedef struct Rectangle {
-    PositionProperties_t _positionProperties;
-    coord_t _topLeftCorner;
-    PIXELS _width;
-    PIXELS _height;
-} Rectangle_t;
-
-int Rectangle__init(Rectangle_t *this, coord_t center, PIXELS width, PIXELS height, unsigned int color);
-
-int Rectangle__updateCorner(Rectangle_t *this);
-
-// -------------------------------------
-typedef struct Triangle {
-	PositionProperties_t _positionProperties;
-    coord_t _corners[3]; //< Triangle's corners in the order of top, bottom-left, bottom-right
-    PIXELS _height;
-} Triangle_t;
-
-int Triangle__init(Triangle_t *this, coord_t center, PIXELS height, unsigned int color);
+PositionProperties_h_t Circle__getPositionProperties(Circle_h_t *handle);
+PIXELS Circle__getRadius(Circle_h_t *handle);
 
 // -------------------------------------
 
-typedef struct Message {
-    PositionProperties_t _positionProperties;
-    coord_t _topLeftCorner;
-    char *_text;
-    int _textWidth;
-    int _textHeight;
-} Message_t;
+typedef void* Rectangle_h_t;
 
-int Message__init(Message_t *this, coord_t center, char *text, unsigned int color);
+int Rectangle__init(Rectangle_h_t *handle, coord_t center, PIXELS width, PIXELS height, unsigned int color);
 
-int Message__updateCorner(Message_t *this);
+int Rectangle__updateCorner(Rectangle_h_t *handle);
+
+PositionProperties_h_t Rectangle__getPositionProperties(Rectangle_h_t *handle);
+coord_t Rectangle__getTopLeftCorner(Rectangle_h_t *handle);
+PIXELS Rectangle__getWidth(Rectangle_h_t *handle);
+PIXELS Rectangle__getHeight(Rectangle_h_t *handle);
+
+// -------------------------------------
+typedef void *Triangle_h_t;
+
+int Triangle__init(Triangle_h_t *handle, coord_t center, PIXELS height, unsigned int color);
+
+PositionProperties_h_t Triangle__getPositionProperties(Triangle_h_t *handle);
+coord_t* Triangle__getCorners(Triangle_h_t *handle);
+
+
+// -------------------------------------
+
+typedef void *Message_h_t;
+
+int Message__init(Message_h_t *handle, coord_t center, char *text, unsigned int color);
+
+int Message__updateCorner(Message_h_t *handle);
+
+PositionProperties_h_t Message__getPositionProperties(Message_h_t *handle);
+char* Message__getText(Message_h_t *handle);
+coord_t Message__getTopLeftCorner(Message_h_t *handle);
+
+
+
+#endif

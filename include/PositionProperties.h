@@ -5,6 +5,9 @@
  * @brief A class to handle the position of objects created using TUM_Draw.
  */
 
+#ifndef __POSITION_PROPERTIES_H__
+#define __POSITION_PROPERTIES_H__
+
 #include <math.h>
 #include <stdio.h>
 
@@ -19,35 +22,28 @@
 
 #define SCREEN_CENTER (coord_t) { SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 }
 
-/**
- * @brief Object to reperesent position as well as movement of a shape.
- * 
- * An object of PositionProperties is stored in a shape object to represent
- * position and shape of the center of that object.
- */
-typedef struct PositionProperties {
-	PIXELS _x; /**< X pixel coord of center on screen */
-    PIXELS _y; /**< Y pixel coord of center on screen */
+typedef void *PositionProperties_h_t;
 
-    float _f_x; /**< Absolute X location center */
-    float _f_y; /**< Absolute Y location center */    
-
-    float _dx; /**< X axis speed in pixels/second */
-    float _dy; /**< Y axis speed in pixels/second */
-
-    unsigned int _color; /**< Hex RGB colour of the ball */
-} PositionProperties_t;
-
-int PositionProperties__init(PositionProperties_t *this, PIXELS x,
+int PositionProperties__init(PositionProperties_h_t *handle, PIXELS x,
 			 PIXELS y, unsigned int color);
 
-int PositionProperties__setPosition(PositionProperties_t *this, float f_x, float f_y);
+int PositionProperties__setPosition(PositionProperties_h_t *handle, float f_x, float f_y);
 
-int PositionProperties__updatePosition(PositionProperties_t *this, unsigned int timePassed_ms);
+int PositionProperties__updatePosition(PositionProperties_h_t *handle, unsigned int timePassed_ms);
 
-int PositionProperties__setSpeedMoveOnCircle(PositionProperties_t *this, PIXELS radius, double phase,
+int PositionProperties__setSpeedMoveOnCircle(PositionProperties_h_t *handle, PIXELS radius, double phase,
                                      unsigned int timePeriod_ms, unsigned int timePassedinTotal_ms);
 
-int PositionProperties__moveVetically(PositionProperties_t *this, float dx, PIXELS distanceToBorder);
+int PositionProperties__moveVetically(PositionProperties_h_t *handle, float dx, PIXELS distanceToBorder);
 
-void PositionProperties__printPositionAndSpeed(PositionProperties_t *this);
+PIXELS PositionProperties__getX(PositionProperties_h_t *handle);
+PIXELS PositionProperties__getY(PositionProperties_h_t *handle);
+unsigned int PositionProperties__getColor(PositionProperties_h_t *handle);
+
+
+
+void PositionProperties__printPositionAndSpeed(PositionProperties_h_t *handle);
+
+
+
+#endif
