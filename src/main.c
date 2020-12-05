@@ -17,6 +17,7 @@
 #include "TUM_Sound.h"
 #include "TUM_Utils.h"
 #include "TUM_Font.h"
+#include "TUM_FreeRTOS_Utils.h"
 
 #include "AsyncIO.h"
 
@@ -32,10 +33,14 @@
 #define HEIGHT_SQUARE 80
 #define HEIGHT_TRIANGLE 80
 #define TIME_PERIOD 5000
-#define DISTANCE_TO_BORDER 35
+#define VERTICAL_DISTANCE_TO_BORDER 35
+#define HORIZONTAL_DISTANCE_TO_BORDER 250
 #define MOVING_MESSAGE_SPEED 100
 
+#define BUTTON_PRESS_MESSAGE_POSITION (coord_t) {30, 50}
+
 static TaskHandle_t RunningDisplayTask = NULL;
+static TaskHandle_t CheckingInputsTask = NULL;
 static SemaphoreHandle_t ScreenLock = NULL;
 
 typedef struct buttons_buffer {
@@ -49,6 +54,35 @@ void xGetButtonInput(void)
 {
 	if (xSemaphoreTake(buttons.lock, 0) == pdTRUE) {
 		xQueueReceive(buttonInputQueue, &buttons.buttons, 0);
+		xSemaphoreGive(buttons.lock);
+	}
+}
+
+void manageButtonInputs(int *buttonPressCount) {
+	xGetButtonInput(); // Update global input
+
+	// `buttons` is a global shared variable and as such needs to be
+	// guarded with a mutex, mutex must be obtained before accessing the
+	// resource and given back when you're finished. If the mutex is not
+	// given back then no other task can access the reseource.
+	if (xSemaphoreTake(buttons.lock, 0) == pdTRUE) {
+		if (buttons.buttons[KEYCODE(Q)]) { // Equiv to SDL_SCANCODE_Q
+			exit(EXIT_SUCCESS);
+		}
+
+		if(buttons.buttons[KEYCODE(A)]) {
+			buttonPressCount[0]++;
+		}
+		if(buttons.buttons[KEYCODE(B)]) {
+			buttonPressCount[1]++;
+		}
+		if(buttons.buttons[KEYCODE(C)]) {
+			buttonPressCount[2]++;
+		}
+		if(buttons.buttons[KEYCODE(D)]) {
+			buttonPressCount[3]++;
+		}
+
 		xSemaphoreGive(buttons.lock);
 	}
 }
@@ -69,7 +103,7 @@ void updateShapeAndMessagePositions(Circle_h_t circle, Rectangle_h_t rectangle, 
 
 
 	PositionProperties__moveVetically(Message__getPositionProperties(topMessage), MOVING_MESSAGE_SPEED,
-										DISTANCE_TO_BORDER);
+										HORIZONTAL_DISTANCE_TO_BORDER);
 	PositionProperties__updatePosition(Message__getPositionProperties(topMessage),
 										xLastWakeTime - prevWakeTime);
 	Message__updateCorner(topMessage);
@@ -91,7 +125,7 @@ void drawShapes(Circle_h_t circle, Rectangle_h_t rectangle, Triangle_h_t triangl
 					PositionProperties__getColor(Triangle__getPositionProperties(triangle)));
 }
 
-void drawTexts(Message_h_t topMessage, Message_h_t bottomMessage) {
+void drawMessages(Message_h_t topMessage, Message_h_t bottomMessage) {
 	tumDrawText(Message__getText(bottomMessage), Message__getTopLeftCorner(bottomMessage).x,
 				Message__getTopLeftCorner(bottomMessage).y,
 				PositionProperties__getColor(Message__getPositionProperties(bottomMessage)));
@@ -99,6 +133,16 @@ void drawTexts(Message_h_t topMessage, Message_h_t bottomMessage) {
 	tumDrawText(Message__getText(topMessage), Message__getTopLeftCorner(topMessage).x,
 				Message__getTopLeftCorner(topMessage).y,
 				PositionProperties__getColor(Message__getPositionProperties(topMessage)));
+}
+
+void drawButtonPressMessage(Message_h_t buttonPressMessage,char *buttonPressText, int *buttonPressCount) {
+	sprintf(buttonPressText, "A: %u |  B: %u |  C: %u |  D: %u", buttonPressCount[0],
+			buttonPressCount[1],buttonPressCount[2],buttonPressCount[3]);
+	Message__setText(buttonPressMessage, buttonPressText);
+
+	tumDrawText(Message__getText(buttonPressMessage), Message__getTopLeftCorner(buttonPressMessage).x,
+				Message__getTopLeftCorner(buttonPressMessage).y,
+				PositionProperties__getColor(Message__getPositionProperties(buttonPressMessage)));
 }
 
 void vRunningDisplayTask(void *pvParameters)
@@ -118,16 +162,23 @@ void vRunningDisplayTask(void *pvParameters)
 
     Triangle_h_t triangle = Triangle__init(SCREEN_CENTER, HEIGHT_TRIANGLE, Magenta);
 
-	//Create texts
+	//Create messages
 	static char bottomText[50];
 	sprintf(bottomText, "Hang loose or press [Q] to quit!"); // 32 characters
-	Message_h_t bottomMessage = Message__init((coord_t) {SCREEN_CENTER.x, SCREEN_HEIGHT - DISTANCE_TO_BORDER},
+	Message_h_t bottomMessage = Message__init((coord_t) {SCREEN_CENTER.x, SCREEN_HEIGHT - VERTICAL_DISTANCE_TO_BORDER},
 				  							  bottomText, Black);
 
 	static char topText[50];
 	sprintf(topText, "Hello, I can move!");
-	Message_h_t topMessage = Message__init((coord_t) {SCREEN_CENTER.x, DISTANCE_TO_BORDER},
+	Message_h_t topMessage = Message__init((coord_t) {SCREEN_CENTER.x, VERTICAL_DISTANCE_TO_BORDER},
 				  							topText, Black);
+
+	//Create messages for buttons
+	static char buttonPressText[50];
+	int *buttonPressCount = calloc(4, sizeof(unsigned int)); //automatically initialize initial counts to 0
+	sprintf(buttonPressText, "A: %u |  B: %u |  C: %u |  D: %u", buttonPressCount[0],
+			buttonPressCount[1],buttonPressCount[2],buttonPressCount[3]);
+	Message_h_t buttonPressMessage = Message__initTopLeftCorner(BUTTON_PRESS_MESSAGE_POSITION, buttonPressText, Black);
 
 
 	// Needed such that Gfx library knows which thread controlls drawing
@@ -138,20 +189,10 @@ void vRunningDisplayTask(void *pvParameters)
 
 	while (1) {
 		tumEventFetchEvents(FETCH_EVENT_NONBLOCK); // Query events backend for new events, ie. button presses
-		xGetButtonInput(); // Update global input
 
         xLastWakeTime = xTaskGetTickCount();
 
-		// `buttons` is a global shared variable and as such needs to be
-		// guarded with a mutex, mutex must be obtained before accessing the
-		// resource and given back when you're finished. If the mutex is not
-		// given back then no other task can access the reseource.
-		if (xSemaphoreTake(buttons.lock, 0) == pdTRUE) {
-			if (buttons.buttons[KEYCODE(Q)]) { // Equiv to SDL_SCANCODE_Q
-				exit(EXIT_SUCCESS);
-			}
-			xSemaphoreGive(buttons.lock);
-		}
+		manageButtonInputs(buttonPressCount);
 
 		//Screen manipulatoins
 		xSemaphoreTake(ScreenLock, portMAX_DELAY);
@@ -162,7 +203,8 @@ void vRunningDisplayTask(void *pvParameters)
 		updateShapeAndMessagePositions(circle, rectangle, topMessage, xLastWakeTime,
 									   prevWakeTime, initialWakeTime);
 		drawShapes(circle, rectangle, triangle);
-		drawTexts(topMessage, bottomMessage);
+		drawMessages(topMessage, bottomMessage);
+		drawButtonPressMessage(buttonPressMessage, buttonPressText, buttonPressCount);
 
 		tumDrawUpdateScreen(); // Refresh the screen
 							   // Everything written on the screen before landet in some kind of back buffer
@@ -173,6 +215,14 @@ void vRunningDisplayTask(void *pvParameters)
 		vTaskDelay(portTICK_PERIOD_MS * 20);
 
         prevWakeTime = xLastWakeTime; // to keep track of time intervalls
+	}
+}
+
+void vCheckingInputsTask(void *pvParameters) {
+
+	while(1) {
+		tumFUtilPrintTaskStateList();
+		vTaskDelay(portTICK_PERIOD_MS * 1000);
 	}
 }
 
@@ -212,13 +262,26 @@ int main(int argc, char *argv[])
 	if (xTaskCreate(vRunningDisplayTask, "RunningDisplayTask",
 			mainGENERIC_STACK_SIZE * 2, NULL, mainGENERIC_PRIORITY,
 			&RunningDisplayTask) != pdPASS) {
+		PRINT_ERROR("Failed to create 'RunningDisplayTask'");
 		goto err_runningdisplaytask;
 	}
+
+	// if (xTaskCreate(vCheckingInputsTask, "CheckingInputsTask",
+	// 		mainGENERIC_STACK_SIZE * 2, NULL, mainGENERIC_PRIORITY,
+	// 		&CheckingInputsTask) != pdPASS) {
+	// 	PRINT_ERROR("Failed to create 'CheckingInputsTask'");
+    //     //could use something like on master TASK_PRINT_ERROR
+	// 	goto err_checkinginputstask;
+	// }
+
+	printf("Numerb of tasks: %lu\n\n", uxTaskGetNumberOfTasks());
 
 	vTaskStartScheduler();
 
 	return EXIT_SUCCESS;
 
+err_checkinginputstask:
+    vTaskDelete(vRunningDisplayTask);
 err_runningdisplaytask:
 	vSemaphoreDelete(ScreenLock);
 err_screen_lock: // Everything created before has to be deleted. The item calling the error

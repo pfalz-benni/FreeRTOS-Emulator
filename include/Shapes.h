@@ -48,7 +48,14 @@ typedef void *Message_h_t;
 
 Message_h_t Message__init(coord_t center, char *text, unsigned int color);
 
+/**
+ * Initializes Object at a given top left coordinate instead of at a given center coordinate
+ */
+Message_h_t Message__initTopLeftCorner(coord_t topLeftCorner, char *text, unsigned int color);
+
 int Message__updateCorner(Message_h_t handle);
+
+int Message__setText(Message_h_t handle, char *text);
 
 PositionProperties_h_t Message__getPositionProperties(Message_h_t handle);
 char* Message__getText(Message_h_t handle);

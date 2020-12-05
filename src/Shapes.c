@@ -120,6 +120,20 @@ Message_h_t Message__init(coord_t center, char *text, unsigned int color) {
 	return (Message_h_t) this;
 }
 
+Message_h_t Message__initTopLeftCorner(coord_t topLeftCorner, char *text, unsigned int color) {
+	struct Message *this = malloc(sizeof(struct Message));
+	
+	this->_positionProperties = PositionProperties__init(topLeftCorner.x + this->_textWidth / 2,
+														 topLeftCorner.y + this->_textHeight / 2,
+														 color);
+	this->_text = text;
+	tumGetTextSize(text, &(this->_textWidth), &(this->_textHeight));
+
+	this->_topLeftCorner = topLeftCorner;
+
+	return (Message_h_t) this;
+}
+
 int Message__updateCorner(Message_h_t handle) {
 	struct Message *this = (struct Message*) handle;
 
@@ -128,6 +142,14 @@ int Message__updateCorner(Message_h_t handle) {
 
 	return 0;
 }
+
+
+int Message__setText(Message_h_t handle, char *text) {
+	((struct Message*) handle)->_text = text;
+
+	return 0;
+}
+
 
 PositionProperties_h_t Message__getPositionProperties(Message_h_t handle) {
 	return ((struct Message*) handle)->_positionProperties;
