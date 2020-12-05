@@ -25,6 +25,16 @@
 #define mainGENERIC_PRIORITY (tskIDLE_PRIORITY)
 #define mainGENERIC_STACK_SIZE ((unsigned short)2560)
 
+#define KEYCODE(CHAR) SDL_SCANCODE_##CHAR
+
+#define DISTANCE_TO_TRIANGLE 150
+#define RADIUS_CIRCLE 50
+#define HEIGHT_SQUARE 80
+#define HEIGHT_TRIANGLE 80
+#define TIME_PERIOD 5000
+#define DISTANCE_TO_BORDER 35
+#define MOVING_MESSAGE_SPEED 100
+
 static TaskHandle_t RunningDisplayTask = NULL;
 static SemaphoreHandle_t ScreenLock = NULL;
 
@@ -43,25 +53,53 @@ void xGetButtonInput(void)
 	}
 }
 
-void writeTextOnScreen(char *message) {
-	sprintf(message, "Hang loose or press [Q] to quit!"); // 32 characters
+void updateShapeAndMessagePositions(Circle_h_t circle, Rectangle_h_t rectangle, Message_h_t topMessage,
+									TickType_t xLastWakeTime, TickType_t prevWakeTime, TickType_t initialWakeTime) {
+	PositionProperties__setSpeedMoveOnCircle(Circle__getPositionProperties(circle),
+		DISTANCE_TO_TRIANGLE, M_PI, TIME_PERIOD, xLastWakeTime - initialWakeTime);
+	PositionProperties__updatePosition(Circle__getPositionProperties(circle),
+										xLastWakeTime - prevWakeTime);
 
-	static int messageWidth = 0;
-	if (!tumGetTextSize(message, &messageWidth, NULL)) {
-		tumDrawText(message, SCREEN_CENTER.x - messageWidth / 2,
-					SCREEN_HEIGHT - 40, Black);
-	}
+
+	PositionProperties__setSpeedMoveOnCircle(Rectangle__getPositionProperties(rectangle),
+		DISTANCE_TO_TRIANGLE, 0, TIME_PERIOD, xLastWakeTime - initialWakeTime);
+	PositionProperties__updatePosition(Rectangle__getPositionProperties(rectangle),
+										xLastWakeTime - prevWakeTime);
+	Rectangle__updateCorner(rectangle);
+
+
+	PositionProperties__moveVetically(Message__getPositionProperties(topMessage), MOVING_MESSAGE_SPEED,
+										DISTANCE_TO_BORDER);
+	PositionProperties__updatePosition(Message__getPositionProperties(topMessage),
+										xLastWakeTime - prevWakeTime);
+	Message__updateCorner(topMessage);
 }
 
-#define KEYCODE(CHAR) SDL_SCANCODE_##CHAR
+void drawShapes(Circle_h_t circle, Rectangle_h_t rectangle, Triangle_h_t triangle) {
+	tumDrawCircle(PositionProperties__getX(Circle__getPositionProperties(circle)),
+					PositionProperties__getY(Circle__getPositionProperties(circle)),
+					Circle__getRadius(circle),
+					PositionProperties__getColor(Circle__getPositionProperties(circle)));
 
-#define DISTANCE_TO_TRIANGLE 150
-#define RADIUS_CIRCLE 50
-#define HEIGHT_SQUARE 80
-#define HEIGHT_TRIANGLE 80
-#define TIME_PERIOD 5000
-#define DISTANCE_TO_BORDER 35
-#define MOVING_MESSAGE_SPEED 100
+	tumDrawFilledBox(Rectangle__getTopLeftCorner(rectangle).x,
+						Rectangle__getTopLeftCorner(rectangle).y,
+						Rectangle__getWidth(rectangle),
+						Rectangle__getHeight(rectangle),
+						PositionProperties__getColor(Rectangle__getPositionProperties(rectangle)));
+
+	tumDrawTriangle(Triangle__getCorners(triangle),
+					PositionProperties__getColor(Triangle__getPositionProperties(triangle)));
+}
+
+void drawTexts(Message_h_t topMessage, Message_h_t bottomMessage) {
+	tumDrawText(Message__getText(bottomMessage), Message__getTopLeftCorner(bottomMessage).x,
+				Message__getTopLeftCorner(bottomMessage).y,
+				PositionProperties__getColor(Message__getPositionProperties(bottomMessage)));
+
+	tumDrawText(Message__getText(topMessage), Message__getTopLeftCorner(topMessage).x,
+				Message__getTopLeftCorner(topMessage).y,
+				PositionProperties__getColor(Message__getPositionProperties(topMessage)));
+}
 
 void vRunningDisplayTask(void *pvParameters)
 {
@@ -120,61 +158,21 @@ void vRunningDisplayTask(void *pvParameters)
 
 		tumDrawClear(White); // Clear screen
 
-        //Update shape and message positions
-        PositionProperties__setSpeedMoveOnCircle(Circle__getPositionProperties(circle),
-			DISTANCE_TO_TRIANGLE, M_PI, TIME_PERIOD, xLastWakeTime - initialWakeTime);
-        PositionProperties__updatePosition(Circle__getPositionProperties(circle),
-                                           xLastWakeTime - prevWakeTime);
-
-
-        PositionProperties__setSpeedMoveOnCircle(Rectangle__getPositionProperties(rectangle),
-			DISTANCE_TO_TRIANGLE, 0, TIME_PERIOD, xLastWakeTime - initialWakeTime);
-        PositionProperties__updatePosition(Rectangle__getPositionProperties(rectangle),
-                                           xLastWakeTime - prevWakeTime);
-		Rectangle__updateCorner(rectangle);
-
-
-		PositionProperties__moveVetically(Message__getPositionProperties(topMessage), MOVING_MESSAGE_SPEED,
-										  DISTANCE_TO_BORDER);
-		PositionProperties__updatePosition(Message__getPositionProperties(topMessage),
-										   xLastWakeTime - prevWakeTime);
-		Message__updateCorner(topMessage);
-
-
-        // Draw updated shapes
-		tumDrawCircle(PositionProperties__getX(Circle__getPositionProperties(circle)),
-					  PositionProperties__getY(Circle__getPositionProperties(circle)),
-					  Circle__getRadius(circle),
-					  PositionProperties__getColor(Circle__getPositionProperties(circle)));
-
-		tumDrawFilledBox(Rectangle__getTopLeftCorner(rectangle).x,
-						 Rectangle__getTopLeftCorner(rectangle).y,
-						 Rectangle__getWidth(rectangle),
-						 Rectangle__getHeight(rectangle),
-						 PositionProperties__getColor(Rectangle__getPositionProperties(rectangle)));
-
-		tumDrawTriangle(Triangle__getCorners(triangle),
-						PositionProperties__getColor(Triangle__getPositionProperties(triangle)));
-
-		
-		// Write text
-		tumDrawText(Message__getText(bottomMessage), Message__getTopLeftCorner(bottomMessage).x,
-					Message__getTopLeftCorner(bottomMessage).y,
-					PositionProperties__getColor(Message__getPositionProperties(bottomMessage)));
-
-		tumDrawText(Message__getText(topMessage), Message__getTopLeftCorner(topMessage).x,
-					Message__getTopLeftCorner(topMessage).y,
-					PositionProperties__getColor(Message__getPositionProperties(topMessage)));
-
+		//Draw all objects in appropriate position
+		updateShapeAndMessagePositions(circle, rectangle, topMessage, xLastWakeTime,
+									   prevWakeTime, initialWakeTime);
+		drawShapes(circle, rectangle, triangle);
+		drawTexts(topMessage, bottomMessage);
 
 		tumDrawUpdateScreen(); // Refresh the screen
 							   // Everything written on the screen before landet in some kind of back buffer
 
 		xSemaphoreGive(ScreenLock);
 
-		// Basic sleep of 1000 milliseconds
+		// Basic sleep to free CPU
 		vTaskDelay(portTICK_PERIOD_MS * 20);
-        prevWakeTime = xLastWakeTime;
+
+        prevWakeTime = xLastWakeTime; // to keep track of time intervalls
 	}
 }
 
