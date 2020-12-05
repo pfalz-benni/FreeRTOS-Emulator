@@ -733,7 +733,7 @@ task that attempted the write. */
 #endif
 
 #ifndef configUSE_STATS_FORMATTING_FUNCTIONS
-#define configUSE_STATS_FORMATTING_FUNCTIONS 0
+#define configUSE_STATS_FORMATTING_FUNCTIONS 1 // Set from 0 to 1 by benni to use these functions
 #endif
 
 #ifndef portASSERT_IF_INTERRUPT_PRIORITY_INVALID
