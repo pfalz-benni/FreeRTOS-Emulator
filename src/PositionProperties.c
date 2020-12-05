@@ -23,9 +23,8 @@ struct PositionProperties {
 
 
 
-int PositionProperties__init(PositionProperties_h_t *handle, PIXELS x,
-			 PIXELS y, unsigned int color) {
-	struct PositionProperties *this = (struct PositionProperties *) this;
+PositionProperties_h_t PositionProperties__init(PIXELS x, PIXELS y, unsigned int color) {
+	struct PositionProperties *this = malloc(sizeof(struct PositionProperties));
 
 	this->_x = x;
 	this->_y = y;
@@ -35,11 +34,11 @@ int PositionProperties__init(PositionProperties_h_t *handle, PIXELS x,
 	this->_dy = 0;
 	this->_color = color;
 
-	return 0;
+	return (PositionProperties_h_t) this;
 }
 
-int PositionProperties__setPosition(PositionProperties_h_t *handle, float f_x, float f_y) {
-	struct PositionProperties *this = (struct PositionProperties *) this;
+int PositionProperties__setPosition(PositionProperties_h_t handle, float f_x, float f_y) {
+	struct PositionProperties *this = (struct PositionProperties *) handle;
 
 	this->_x = round(f_x);
 	this->_y = round(f_y);
@@ -49,8 +48,8 @@ int PositionProperties__setPosition(PositionProperties_h_t *handle, float f_x, f
 	return 0;
 }
 
-int PositionProperties__updatePosition(PositionProperties_h_t *handle, unsigned int timePassed_ms) {
-	struct PositionProperties *this = (struct PositionProperties *) this;
+int PositionProperties__updatePosition(PositionProperties_h_t handle, unsigned int timePassed_ms) {
+	struct PositionProperties *this = (struct PositionProperties *) handle;
 
 	double timePassed_s = timePassed_ms / 1000.0;
 	PositionProperties__setPosition(handle, this->_f_x + this->_dx * timePassed_s,
@@ -58,9 +57,9 @@ int PositionProperties__updatePosition(PositionProperties_h_t *handle, unsigned 
 	return 0;
 }
 
-int PositionProperties__setSpeedMoveOnCircle(PositionProperties_h_t *handle, PIXELS radius, double phase,
+int PositionProperties__setSpeedMoveOnCircle(PositionProperties_h_t handle, PIXELS radius, double phase,
                                      unsigned int timePeriod_ms, unsigned int timePassedInTotal_ms) {
-	struct PositionProperties *this = (struct PositionProperties *) this;
+	struct PositionProperties *this = (struct PositionProperties *) handle;
 
 	double timePeriod_s = timePeriod_ms / 1000.0;
 	
@@ -73,8 +72,8 @@ int PositionProperties__setSpeedMoveOnCircle(PositionProperties_h_t *handle, PIX
 	return 0;
 }
 
-int PositionProperties__moveVetically(PositionProperties_h_t *handle, float dx, PIXELS distanceToBorder) {
-	struct PositionProperties *this = (struct PositionProperties *) this;
+int PositionProperties__moveVetically(PositionProperties_h_t handle, float dx, PIXELS distanceToBorder) {
+	struct PositionProperties *this = (struct PositionProperties *) handle;
 
 	int spaceToRight = this->_x < SCREEN_WIDTH - distanceToBorder;
 	int spaceToLeft = this->_x > distanceToBorder;
@@ -90,20 +89,20 @@ int PositionProperties__moveVetically(PositionProperties_h_t *handle, float dx, 
 }
 
 // Getters:
-PIXELS PositionProperties__getX(PositionProperties_h_t *handle) {
+PIXELS PositionProperties__getX(PositionProperties_h_t handle) {
 	return ((struct PositionProperties *) handle)->_x;
 }
-PIXELS PositionProperties__getY(PositionProperties_h_t *handle) {
+PIXELS PositionProperties__getY(PositionProperties_h_t handle) {
 	return ((struct PositionProperties *) handle)->_y;
 }
-unsigned int PositionProperties__getColor(PositionProperties_h_t *handle) {
+unsigned int PositionProperties__getColor(PositionProperties_h_t handle) {
 	return ((struct PositionProperties*) handle)->_color;
 }
 
 
 
-void PositionProperties__printPositionAndSpeed(PositionProperties_h_t *handle) {
-	struct PositionProperties *this = (struct PositionProperties *) this;
+void PositionProperties__printPositionAndSpeed(PositionProperties_h_t handle) {
+	struct PositionProperties *this = (struct PositionProperties *) handle;
 
 	printf("Coordinates rounded: %d %d,  exact: %f %f,  Speed: %f %f\n",
 			this->_x, this->_y,

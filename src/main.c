@@ -72,29 +72,24 @@ void vRunningDisplayTask(void *pvParameters)
     initialWakeTime = xLastWakeTime;
 
     // Create three shapes
-    Circle_h_t circle;
-    Circle__init(&circle, (coord_t) {SCREEN_CENTER.x - DISTANCE_TO_TRIANGLE, SCREEN_CENTER.y},
-                    RADIUS_CIRCLE, TUMBlue);
+    Circle_h_t circle = Circle__init((coord_t) {SCREEN_CENTER.x - DISTANCE_TO_TRIANGLE, SCREEN_CENTER.y},
+                    	RADIUS_CIRCLE, TUMBlue);
 
-    // Rectangle_h_t rectangle;
-    // Rectangle__init(&rectangle, (coord_t) {SCREEN_CENTER.x + DISTANCE_TO_TRIANGLE, SCREEN_CENTER.y}, 
-    //                 HEIGHT_SQUARE, HEIGHT_SQUARE, Olive);
+    Rectangle_h_t rectangle = Rectangle__init((coord_t) {SCREEN_CENTER.x + DISTANCE_TO_TRIANGLE, SCREEN_CENTER.y}, 
+                    		  HEIGHT_SQUARE, HEIGHT_SQUARE, Olive);
 
-    // Triangle_h_t triangle;
-    // Triangle__init(&triangle, SCREEN_CENTER, HEIGHT_TRIANGLE, Magenta);
+    Triangle_h_t triangle = Triangle__init(SCREEN_CENTER, HEIGHT_TRIANGLE, Magenta);
 
-	// //Create texts
-	// static char bottomText[50];
-	// sprintf(bottomText, "Hang loose or press [Q] to quit!"); // 32 characters
-	// Message_h_t bottomMessage;
-	// Message__init(&(bottomMessage), (coord_t) {SCREEN_CENTER.x, SCREEN_HEIGHT - DISTANCE_TO_BORDER},
-	// 			  bottomText, Black);
+	//Create texts
+	static char bottomText[50];
+	sprintf(bottomText, "Hang loose or press [Q] to quit!"); // 32 characters
+	Message_h_t bottomMessage = Message__init((coord_t) {SCREEN_CENTER.x, SCREEN_HEIGHT - DISTANCE_TO_BORDER},
+				  							  bottomText, Black);
 
-	// static char topText[50];
-	// sprintf(topText, "Hello, I can move!");
-	// Message_h_t topMessage;
-	// Message__init(&(topMessage), (coord_t) {SCREEN_CENTER.x, DISTANCE_TO_BORDER},
-	// 			  topText, Black);
+	static char topText[50];
+	sprintf(topText, "Hello, I can move!");
+	Message_h_t topMessage = Message__init((coord_t) {SCREEN_CENTER.x, DISTANCE_TO_BORDER},
+				  							topText, Black);
 
 
 	// Needed such that Gfx library knows which thread controlls drawing
@@ -126,50 +121,50 @@ void vRunningDisplayTask(void *pvParameters)
 		tumDrawClear(White); // Clear screen
 
         //Update shape and message positions
-        // PositionProperties__setSpeedMoveOnCircle(Circle__getPositionProperties(&circle),
-		// 	DISTANCE_TO_TRIANGLE, M_PI, TIME_PERIOD, xLastWakeTime - initialWakeTime);
-        // PositionProperties__updatePosition(Circle__getPositionProperties(&circle),
-        //                                    xLastWakeTime - prevWakeTime);
+        PositionProperties__setSpeedMoveOnCircle(Circle__getPositionProperties(circle),
+			DISTANCE_TO_TRIANGLE, M_PI, TIME_PERIOD, xLastWakeTime - initialWakeTime);
+        PositionProperties__updatePosition(Circle__getPositionProperties(circle),
+                                           xLastWakeTime - prevWakeTime);
 
 
-        // PositionProperties__setSpeedMoveOnCircle(Rectangle__getPositionProperties(&rectangle),
-		// 	DISTANCE_TO_TRIANGLE, 0, TIME_PERIOD, xLastWakeTime - initialWakeTime);
-        // PositionProperties__updatePosition(Rectangle__getPositionProperties(&rectangle),
-        //                                    xLastWakeTime - prevWakeTime);
-		// Rectangle__updateCorner(&rectangle);
+        PositionProperties__setSpeedMoveOnCircle(Rectangle__getPositionProperties(rectangle),
+			DISTANCE_TO_TRIANGLE, 0, TIME_PERIOD, xLastWakeTime - initialWakeTime);
+        PositionProperties__updatePosition(Rectangle__getPositionProperties(rectangle),
+                                           xLastWakeTime - prevWakeTime);
+		Rectangle__updateCorner(rectangle);
 
 
-		// PositionProperties__moveVetically(Message__getPositionProperties(&topMessage), MOVING_MESSAGE_SPEED,
-		// 								  DISTANCE_TO_BORDER);
-		// PositionProperties__updatePosition(Message__getPositionProperties(&topMessage),
-		// 								   xLastWakeTime - prevWakeTime);
-		// Message__updateCorner(&topMessage);
+		PositionProperties__moveVetically(Message__getPositionProperties(topMessage), MOVING_MESSAGE_SPEED,
+										  DISTANCE_TO_BORDER);
+		PositionProperties__updatePosition(Message__getPositionProperties(topMessage),
+										   xLastWakeTime - prevWakeTime);
+		Message__updateCorner(topMessage);
 
 
         // Draw updated shapes
-		// tumDrawCircle(PositionProperties__getX(Circle__getPositionProperties(&circle)),
-		// 			  PositionProperties__getY(Circle__getPositionProperties(&circle)),
-		// 			  Circle__getRadius(&circle),
-		// 			  PositionProperties__getColor(Circle__getPositionProperties(&circle)));
+		tumDrawCircle(PositionProperties__getX(Circle__getPositionProperties(circle)),
+					  PositionProperties__getY(Circle__getPositionProperties(circle)),
+					  Circle__getRadius(circle),
+					  PositionProperties__getColor(Circle__getPositionProperties(circle)));
 
-		// tumDrawFilledBox(PositionProperties__getX(Rectangle__getPositionProperties(&rectangle)),
-		// 				 PositionProperties__getY(Rectangle__getPositionProperties(&rectangle)),
-		// 				 Rectangle__getWidth(&rectangle),
-		// 				 Rectangle__getHeight(&circle),
-		// 				 PositionProperties__getColor(Rectangle__getPositionProperties(&rectangle)));
+		tumDrawFilledBox(Rectangle__getTopLeftCorner(rectangle).x,
+						 Rectangle__getTopLeftCorner(rectangle).y,
+						 Rectangle__getWidth(rectangle),
+						 Rectangle__getHeight(rectangle),
+						 PositionProperties__getColor(Rectangle__getPositionProperties(rectangle)));
 
-		// tumDrawTriangle(Triangle__getCorners(&triangle),
-		// 				PositionProperties__getColor(Triangle__getPositionProperties(&triangle)));
+		tumDrawTriangle(Triangle__getCorners(triangle),
+						PositionProperties__getColor(Triangle__getPositionProperties(triangle)));
 
 		
 		// Write text
-		// tumDrawText(Message__getText(&bottomMessage), Message__getTopLeftCorner(&bottomMessage).x,
-		// 			Message__getTopLeftCorner(&bottomMessage).y,
-		// 			PositionProperties__getColor(Message__getPositionProperties(&bottomMessage)));
+		tumDrawText(Message__getText(bottomMessage), Message__getTopLeftCorner(bottomMessage).x,
+					Message__getTopLeftCorner(bottomMessage).y,
+					PositionProperties__getColor(Message__getPositionProperties(bottomMessage)));
 
-		// tumDrawText(Message__getText(&topMessage), Message__getTopLeftCorner(&topMessage).x,
-		// 			Message__getTopLeftCorner(&topMessage).y,
-		// 			PositionProperties__getColor(Message__getPositionProperties(&topMessage)));
+		tumDrawText(Message__getText(topMessage), Message__getTopLeftCorner(topMessage).x,
+					Message__getTopLeftCorner(topMessage).y,
+					PositionProperties__getColor(Message__getPositionProperties(topMessage)));
 
 
 		tumDrawUpdateScreen(); // Refresh the screen

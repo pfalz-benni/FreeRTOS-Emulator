@@ -15,44 +15,44 @@
 
 typedef void *Circle_h_t;
 
-int Circle__init(Circle_h_t *handle, coord_t center, PIXELS radius, unsigned int color);
+Circle_h_t Circle__init(coord_t center, PIXELS radius, unsigned int color);
 
-PositionProperties_h_t Circle__getPositionProperties(Circle_h_t *handle);
-PIXELS Circle__getRadius(Circle_h_t *handle);
+PositionProperties_h_t Circle__getPositionProperties(Circle_h_t handle);
+PIXELS Circle__getRadius(Circle_h_t handle);
 
 // -------------------------------------
 
-typedef void* Rectangle_h_t;
+typedef void *Rectangle_h_t;
 
-int Rectangle__init(Rectangle_h_t *handle, coord_t center, PIXELS width, PIXELS height, unsigned int color);
+Rectangle_h_t Rectangle__init(coord_t center, PIXELS width, PIXELS height, unsigned int color);
 
-int Rectangle__updateCorner(Rectangle_h_t *handle);
+int Rectangle__updateCorner(Rectangle_h_t handle);
 
-PositionProperties_h_t Rectangle__getPositionProperties(Rectangle_h_t *handle);
-coord_t Rectangle__getTopLeftCorner(Rectangle_h_t *handle);
-PIXELS Rectangle__getWidth(Rectangle_h_t *handle);
-PIXELS Rectangle__getHeight(Rectangle_h_t *handle);
+PositionProperties_h_t Rectangle__getPositionProperties(Rectangle_h_t handle);
+coord_t Rectangle__getTopLeftCorner(Rectangle_h_t handle);
+PIXELS Rectangle__getWidth(Rectangle_h_t handle);
+PIXELS Rectangle__getHeight(Rectangle_h_t handle);
 
 // -------------------------------------
 typedef void *Triangle_h_t;
 
-int Triangle__init(Triangle_h_t *handle, coord_t center, PIXELS height, unsigned int color);
+Triangle_h_t Triangle__init(coord_t center, PIXELS height, unsigned int color);
 
-PositionProperties_h_t Triangle__getPositionProperties(Triangle_h_t *handle);
-coord_t* Triangle__getCorners(Triangle_h_t *handle);
+PositionProperties_h_t Triangle__getPositionProperties(Triangle_h_t handle);
+coord_t* Triangle__getCorners(Triangle_h_t handle);
 
 
 // -------------------------------------
 
 typedef void *Message_h_t;
 
-int Message__init(Message_h_t *handle, coord_t center, char *text, unsigned int color);
+Message_h_t Message__init(coord_t center, char *text, unsigned int color);
 
-int Message__updateCorner(Message_h_t *handle);
+int Message__updateCorner(Message_h_t handle);
 
-PositionProperties_h_t Message__getPositionProperties(Message_h_t *handle);
-char* Message__getText(Message_h_t *handle);
-coord_t Message__getTopLeftCorner(Message_h_t *handle);
+PositionProperties_h_t Message__getPositionProperties(Message_h_t handle);
+char* Message__getText(Message_h_t handle);
+coord_t Message__getTopLeftCorner(Message_h_t handle);
 
 
 

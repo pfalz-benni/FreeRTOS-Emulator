@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "Shapes.h"
 
 
@@ -6,19 +8,19 @@ struct Circle {
 	PIXELS _radius;
 };
 
-int Circle__init(Circle_h_t *handle, coord_t center, PIXELS radius, unsigned int color) {
-	struct Circle *this = (struct Circle*) handle;
+Circle_h_t Circle__init(coord_t center, PIXELS radius, unsigned int color) {
+	struct Circle *this = malloc(sizeof(struct Circle));
 
-	PositionProperties__init(&(this->_positionProperties), center.x, center.y, color);
+	this->_positionProperties = PositionProperties__init(center.x, center.y, color);
 	this->_radius = radius;
 
-	return 0;
+	return (Circle_h_t) this;
 }
 
-PositionProperties_h_t Circle__getPositionProperties(Circle_h_t *handle) {
+PositionProperties_h_t Circle__getPositionProperties(Circle_h_t handle) {
 	return ((struct Circle*) handle)->_positionProperties;
 }
-PIXELS Circle__getRadius(Circle_h_t *handle) {
+PIXELS Circle__getRadius(Circle_h_t handle) {
 	return ((struct Circle*) handle)->_radius;
 }
 
@@ -31,18 +33,18 @@ struct Rectangle {
     PIXELS _height;
 };
 
-int Rectangle__init(Rectangle_h_t *handle, coord_t center, PIXELS width, PIXELS height, unsigned int color) {
-	struct Rectangle *this = (struct Rectangle*) handle;
+Rectangle_h_t Rectangle__init(coord_t center, PIXELS width, PIXELS height, unsigned int color) {
+	struct Rectangle *this = malloc(sizeof(struct Rectangle));
 
-	PositionProperties__init(&(this->_positionProperties), center.x, center.y, color);
+	this->_positionProperties = PositionProperties__init(center.x, center.y, color);
 	this->_topLeftCorner = (coord_t) {center.x - width / 2, center.y - height / 2};
 	this->_width = width;
 	this->_height = height;
 
-	return 0;
+	return (Rectangle_h_t) this;
 }
 
-int Rectangle__updateCorner(Rectangle_h_t *handle){
+int Rectangle__updateCorner(Rectangle_h_t handle){
 	struct Rectangle *this = (struct Rectangle*) handle;
 	
 	this->_topLeftCorner = (coord_t) {PositionProperties__getX(this->_positionProperties) - this->_width / 2,
@@ -51,16 +53,16 @@ int Rectangle__updateCorner(Rectangle_h_t *handle){
 	return 0;
 }
 
-PositionProperties_h_t Rectangle__getPositionProperties(Rectangle_h_t *handle) {
+PositionProperties_h_t Rectangle__getPositionProperties(Rectangle_h_t handle) {
 	return ((struct Rectangle*) handle)->_positionProperties;
 }
-coord_t Rectangle__getTopLeftCorner(Rectangle_h_t *handle){
+coord_t Rectangle__getTopLeftCorner(Rectangle_h_t handle){
 	return ((struct Rectangle*) handle)->_topLeftCorner;
 }
-PIXELS Rectangle__getWidth(Rectangle_h_t *handle) {
+PIXELS Rectangle__getWidth(Rectangle_h_t handle) {
 	return ((struct Rectangle*) handle)->_width;
 }
-PIXELS Rectangle__getHeight(Rectangle_h_t *handle) {
+PIXELS Rectangle__getHeight(Rectangle_h_t handle) {
 	return ((struct Rectangle*) handle)->_height;
 }
 
@@ -68,26 +70,30 @@ PIXELS Rectangle__getHeight(Rectangle_h_t *handle) {
 
 struct Triangle {
 	PositionProperties_h_t _positionProperties;
-    coord_t _corners[3]; //< Triangle's corners in the order of top, bottom-left, bottom-right
+    coord_t *_corners; //< Triangle's corners in the order of top, bottom-left, bottom-right
     PIXELS _height;
 };
 
-int Triangle__init(Triangle_h_t *handle, coord_t center, PIXELS height, unsigned int color) {
-	struct Triangle *this = (struct Triangle*) handle;
+Triangle_h_t Triangle__init(coord_t center, PIXELS height, unsigned int color) {
+	struct Triangle *this = malloc(sizeof(struct Triangle));
 
-	PositionProperties__init(&(this->_positionProperties), center.x, center.y, color);
+	this->_positionProperties = PositionProperties__init(center.x, center.y, color);
+
+	this->_corners = malloc(3 * sizeof(coord_t));
 	this->_corners[0] = (coord_t) {center.x, center.y - height / 2};
 	this->_corners[1] = (coord_t) {center.x - height / 2, center.y + height / 2};
 	this->_corners[2] = (coord_t) {center.x + height / 2, center.y + height / 2};
+
 	this->_height = height;
     
-	return 0;
+	return (Triangle_h_t) this;
 }
 
-PositionProperties_h_t Triangle__getPositionProperties(Triangle_h_t *handle) {
+PositionProperties_h_t Triangle__getPositionProperties(Triangle_h_t handle) {
+
 	return ((struct Triangle*) handle)->_positionProperties;
 }
-coord_t* Triangle__getCorners(Triangle_h_t *handle) {
+coord_t* Triangle__getCorners(Triangle_h_t handle) {
 	return ((struct Triangle*) handle)->_corners;
 }
 
@@ -102,33 +108,33 @@ struct Message {
     int _textHeight;
 };
 
-int Message__init(Message_h_t *handle, coord_t center, char *text, unsigned int color) {
-	struct Message *this = (struct Message*) handle;
+Message_h_t Message__init(coord_t center, char *text, unsigned int color) {
+	struct Message *this = malloc(sizeof(struct Message));
 	
-	PositionProperties__init(&(this->_positionProperties), center.x, center.y, color);
+	this->_positionProperties = PositionProperties__init(center.x, center.y, color);
 	this->_text = text;
 	tumGetTextSize(text, &(this->_textWidth), &(this->_textHeight));
 
 	this->_topLeftCorner = (coord_t) {center.x - this->_textWidth / 2, center.y - this->_textHeight / 2};
 
-	return 0;
+	return (Message_h_t) this;
 }
 
-int Message__updateCorner(Message_h_t *handle) {
+int Message__updateCorner(Message_h_t handle) {
 	struct Message *this = (struct Message*) handle;
 
 	this->_topLeftCorner = (coord_t) {PositionProperties__getX(this->_positionProperties) - this->_textWidth / 2,
-									  PositionProperties__getX(this->_positionProperties) - this->_textHeight / 2};
+									  PositionProperties__getY(this->_positionProperties) - this->_textHeight / 2};
 
 	return 0;
 }
 
-PositionProperties_h_t Message__getPositionProperties(Message_h_t *handle) {
+PositionProperties_h_t Message__getPositionProperties(Message_h_t handle) {
 	return ((struct Message*) handle)->_positionProperties;
 }
-char* Message__getText(Message_h_t *handle) {
+char* Message__getText(Message_h_t handle) {
 	return ((struct Message*) handle)->_text;
 }
-coord_t Message__getTopLeftCorner(Message_h_t *handle) {
+coord_t Message__getTopLeftCorner(Message_h_t handle) {
 	return ((struct Message*) handle)->_topLeftCorner;
 }
