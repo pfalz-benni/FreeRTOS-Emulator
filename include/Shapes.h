@@ -60,6 +60,7 @@ int Message__setText(Message_h_t handle, char *text);
 PositionProperties_h_t Message__getPositionProperties(Message_h_t handle);
 char* Message__getText(Message_h_t handle);
 coord_t Message__getTopLeftCorner(Message_h_t handle);
+int Message__getTextHeight(Message_h_t handle);
 
 
 

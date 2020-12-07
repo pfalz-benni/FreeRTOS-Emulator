@@ -160,3 +160,6 @@ char* Message__getText(Message_h_t handle) {
 coord_t Message__getTopLeftCorner(Message_h_t handle) {
 	return ((struct Message*) handle)->_topLeftCorner;
 }
+int Message__getTextHeight(Message_h_t handle) {
+	return ((struct Message*) handle)->_textHeight;
+}

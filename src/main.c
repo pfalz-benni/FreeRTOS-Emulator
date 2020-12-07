@@ -48,6 +48,7 @@
 #define DISTANCE_HORIZONTAL_TO_BORDER 250
 #define SPEED_MOVING_MESSAGE 100
 #define COORD_BUTTON_PRESS_MESSAGE (coord_t) {30, 50}
+#define LENGTH_STRINGS_DRAWN 50
 
 static TaskHandle_t RunningDisplayTask = NULL;
 static TaskHandle_t CheckingInputsTask = NULL;
@@ -123,7 +124,7 @@ void drawShapes(Circle_h_t circle, Rectangle_h_t rectangle, Triangle_h_t triangl
 					PositionProperties__getColor(Triangle__getPositionProperties(triangle)));
 }
 
-void drawMessages(Message_h_t topMessage, Message_h_t bottomMessage) {
+void drawSimpleTextMessages(Message_h_t topMessage, Message_h_t bottomMessage) {
 	tumDrawText(Message__getText(bottomMessage), Message__getTopLeftCorner(bottomMessage).x,
 				Message__getTopLeftCorner(bottomMessage).y,
 				PositionProperties__getColor(Message__getPositionProperties(bottomMessage)));
@@ -133,17 +134,31 @@ void drawMessages(Message_h_t topMessage, Message_h_t bottomMessage) {
 				PositionProperties__getColor(Message__getPositionProperties(topMessage)));
 }
 
-void drawButtonPressMessage(Message_h_t buttonPressMessage,char *buttonPressText, buttonPresses_t buttonPressCount) {
+void drawButtonPressMessage(Message_h_t buttonPressMessage, buttonPresses_t buttonPressCount) {
+	char formatedText[LENGTH_STRINGS_DRAWN];
+
 	if (xSemaphoreTake(buttonPressCount.lock, portMAX_DELAY) == pdTRUE) {
-		sprintf(buttonPressText, "A: %u |  B: %u |  C: %u |  D: %u", buttonPressCount.valuesABCD[0],
+		sprintf(formatedText, "A: %u |  B: %u |  C: %u |  D: %u", buttonPressCount.valuesABCD[0],
 				buttonPressCount.valuesABCD[1],buttonPressCount.valuesABCD[2],buttonPressCount.valuesABCD[3]);
 		xSemaphoreGive(buttonPressCount.lock);
 	}
-	Message__setText(buttonPressMessage, buttonPressText);
+
+	Message__setText(buttonPressMessage, formatedText);
 
 	tumDrawText(Message__getText(buttonPressMessage), Message__getTopLeftCorner(buttonPressMessage).x,
 				Message__getTopLeftCorner(buttonPressMessage).y,
 				PositionProperties__getColor(Message__getPositionProperties(buttonPressMessage)));
+}
+
+void drawMouseCoordMessage(Message_h_t mouseCoordMessage) {
+	char formatedText[LENGTH_STRINGS_DRAWN];
+
+	sprintf(formatedText, "X-axis: %d |  Y-axis: %d", tumEventGetMouseX(), tumEventGetMouseY());
+	Message__setText(mouseCoordMessage, formatedText);
+
+	tumDrawText(Message__getText(mouseCoordMessage), Message__getTopLeftCorner(mouseCoordMessage).x,
+				Message__getTopLeftCorner(mouseCoordMessage).y,
+				PositionProperties__getColor(Message__getPositionProperties(mouseCoordMessage)));
 }
 
 void vRunningDisplayTask(void *pvParameters)
@@ -164,20 +179,19 @@ void vRunningDisplayTask(void *pvParameters)
     Triangle_h_t triangle = Triangle__init(SCREEN_CENTER, HEIGHT_TRIANGLE, Magenta);
 
 	//Create messages
-	static char bottomText[50];
-	sprintf(bottomText, "Hang loose or press [Q] to quit!"); // 32 characters
 	Message_h_t bottomMessage = Message__init((coord_t) {SCREEN_CENTER.x, SCREEN_HEIGHT - DISTANCE_VERTICAL_TO_BORDER},
-				  							  bottomText, Black);
+				  							  "Hang loose or press [Q] to quit!", Black);
 
-	static char topText[50];
-	sprintf(topText, "Hello, I can move!");
 	Message_h_t topMessage = Message__init((coord_t) {SCREEN_CENTER.x, DISTANCE_VERTICAL_TO_BORDER},
-				  							topText, Black);
+				  							"Hello, I can move!", Black);
 
-	//Create message for buttons
-	static char buttonPressText[50];
-	sprintf(buttonPressText, "A: %u |  B: %u |  C: %u |  D: %u", 0, 0, 0, 0);
-	Message_h_t buttonPressMessage = Message__initTopLeftCorner(COORD_BUTTON_PRESS_MESSAGE, buttonPressText, Black);
+	//Create message for buttons and mouse coordinates
+	Message_h_t buttonPressMessage = Message__initTopLeftCorner(COORD_BUTTON_PRESS_MESSAGE,
+										"A: 0 |  B: 0 |  C: 0 |  D: 0", Black);
+	
+	Message_h_t mouseCoordMessage = Message__initTopLeftCorner((coord_t) {COORD_BUTTON_PRESS_MESSAGE.x,
+										COORD_BUTTON_PRESS_MESSAGE.y + Message__getTextHeight(buttonPressMessage)},
+										"X-axis: 0 |  Y-axis: 0", Black);
 
 
 	// Needed such that Gfx library knows which thread controlls drawing
@@ -200,8 +214,9 @@ void vRunningDisplayTask(void *pvParameters)
 		updateShapeAndMessagePositions(circle, rectangle, topMessage, xLastWakeTime,
 									   prevWakeTime, initialWakeTime);
 		drawShapes(circle, rectangle, triangle);
-		drawMessages(topMessage, bottomMessage);
-		drawButtonPressMessage(buttonPressMessage, buttonPressText, buttonPressCount);
+		drawSimpleTextMessages(topMessage, bottomMessage);
+		drawButtonPressMessage(buttonPressMessage, buttonPressCount);
+		drawMouseCoordMessage(mouseCoordMessage);
 
 		tumDrawUpdateScreen(); // Refresh the screen
 							   // Everything written on the screen before landet in some kind of back buffer
