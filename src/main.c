@@ -36,6 +36,7 @@
 // Button Press Processing
 #define OFFSET_KEYCODE_BUTTONPRESSCOUNT 4
 #define TIME_DEBOUNCE_BUTTON_MS 300
+#define NUMBER_OF_TRACKED_KEYS 4
 
 // Constants for drawn objects
 #define DISTANCE_TO_TRIANGLE 150
@@ -71,10 +72,10 @@ static buttons_buffer_t buttons = { 0 };
  * In this case only the buttons A, B, C and D are tracked
  */
 typedef struct buttonPresses {
-	unsigned int valuesABCD[4];
+	unsigned int valuesABCD[NUMBER_OF_TRACKED_KEYS];
 	SemaphoreHandle_t lock;
-} buttonPressCount_t;
-static buttonPressCount_t buttonPressCount = { 0 };
+} buttonPresses_t;
+static buttonPresses_t buttonPressCount = { 0 };
 
 void xGetButtonInput(void)
 {
@@ -132,9 +133,12 @@ void drawMessages(Message_h_t topMessage, Message_h_t bottomMessage) {
 				PositionProperties__getColor(Message__getPositionProperties(topMessage)));
 }
 
-void drawButtonPressMessage(Message_h_t buttonPressMessage,char *buttonPressText, unsigned int *buttonPressCount) {
-	sprintf(buttonPressText, "A: %u |  B: %u |  C: %u |  D: %u", buttonPressCount[0],
-			buttonPressCount[1],buttonPressCount[2],buttonPressCount[3]);
+void drawButtonPressMessage(Message_h_t buttonPressMessage,char *buttonPressText, buttonPresses_t buttonPressCount) {
+	if (xSemaphoreTake(buttonPressCount.lock, portMAX_DELAY) == pdTRUE) {
+		sprintf(buttonPressText, "A: %u |  B: %u |  C: %u |  D: %u", buttonPressCount.valuesABCD[0],
+				buttonPressCount.valuesABCD[1],buttonPressCount.valuesABCD[2],buttonPressCount.valuesABCD[3]);
+		xSemaphoreGive(buttonPressCount.lock);
+	}
 	Message__setText(buttonPressMessage, buttonPressText);
 
 	tumDrawText(Message__getText(buttonPressMessage), Message__getTopLeftCorner(buttonPressMessage).x,
@@ -197,10 +201,7 @@ void vRunningDisplayTask(void *pvParameters)
 									   prevWakeTime, initialWakeTime);
 		drawShapes(circle, rectangle, triangle);
 		drawMessages(topMessage, bottomMessage);
-		if (xSemaphoreTake(buttonPressCount.lock, 0) == pdTRUE) {
-			drawButtonPressMessage(buttonPressMessage, buttonPressText, buttonPressCount.valuesABCD);
-			xSemaphoreGive(buttonPressCount.lock);
-		}
+		drawButtonPressMessage(buttonPressMessage, buttonPressText, buttonPressCount);
 
 		tumDrawUpdateScreen(); // Refresh the screen
 							   // Everything written on the screen before landet in some kind of back buffer
@@ -234,14 +235,16 @@ void checkAndProcessButtonPress(unsigned char keycode, TickType_t *lastPressTime
 	}
 }
 
-void printABCDButtonStates() {
-	printf("%d ", buttons.buttons[KEYCODE(A)]);
-	printf("%d ", buttons.buttons[KEYCODE(B)]);
-	printf("%d ", buttons.buttons[KEYCODE(C)]);
-	printf("%d   ", buttons.buttons[KEYCODE(D)]);
-
-	static int i = 0;
-	printf("%d\n", i++);
+void resetButtonPressCountIfEntered() {
+	if (tumEventGetMouseLeft() || tumEventGetMouseRight()) {
+		if (xSemaphoreTake(buttonPressCount.lock, portMAX_DELAY) ==
+		    pdTRUE) {
+			for (int i = 0; i < NUMBER_OF_TRACKED_KEYS; i++) {
+				buttonPressCount.valuesABCD[i] = 0;
+			}
+			xSemaphoreGive(buttonPressCount.lock);
+		}
+	}
 }
 
 void vCheckingInputsTask(void *pvParameters) {
@@ -265,8 +268,12 @@ void vCheckingInputsTask(void *pvParameters) {
 			checkAndProcessButtonPress(KEYCODE(C), &lastPressTimeC, &debounceDelay);
 			checkAndProcessButtonPress(KEYCODE(D), &lastPressTimeD, &debounceDelay);
 
+			resetButtonPressCountIfEntered();
+
 			xSemaphoreGive(buttons.lock);
 		}
+
+
 
 		vTaskDelay(portTICK_PERIOD_MS * TIME_CHECKINGINPUTSTASK_DELAY_MS);
 	}
