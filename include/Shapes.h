@@ -2,9 +2,8 @@
  * @file Shapes.h
  * @author Benedikt Witteler
  * @date 27 November 2020
- * @brief Different classes to handle shapes or texts from TUM_Draw.
- * 
- * Created for the exercise part of the ESPL.
+ * @brief Different classes to handle shapes or texts that will
+ * be drawn using TUM_Draw.
  */
 
 #ifndef __SHAPES_H__

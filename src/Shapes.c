@@ -2,7 +2,6 @@
 
 #include "Shapes.h"
 
-
 struct Circle {
 	PositionProperties_h_t _positionProperties;
 	PIXELS _radius;
