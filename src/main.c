@@ -49,6 +49,10 @@
 #define SPEED_MOVING_MESSAGE 100
 #define COORD_BUTTON_PRESS_MESSAGE (coord_t) {30, 50}
 #define LENGTH_STRINGS_DRAWN 50
+/**
+ * Ratio of mouse cursor position to screen center position when moving screen
+ */
+#define RATION_CURSER_CENTER 5
 
 static TaskHandle_t RunningDisplayTask = NULL;
 static TaskHandle_t CheckingInputsTask = NULL;
@@ -161,6 +165,47 @@ void drawMouseCoordMessage(Message_h_t mouseCoordMessage) {
 				PositionProperties__getColor(Message__getPositionProperties(mouseCoordMessage)));
 }
 
+void moveScreenInCursorDirection(coord_t *mobileScreenCenter, Circle_h_t circle,
+		Rectangle_h_t rectangle, Triangle_h_t triangle, Message_h_t bottomMessage,
+		Message_h_t topMessage, Message_h_t buttonPressMessage, Message_h_t mouseCoordMessage) {
+
+	coord_t oldScreenCenter = *mobileScreenCenter;
+
+	// calculate position of new screen center depending on cursor position
+	mobileScreenCenter->x = SCREEN_CENTER.x + (SCREEN_CENTER.x - tumEventGetMouseX()) / 
+		(double) RATION_CURSER_CENTER;
+	mobileScreenCenter->y = SCREEN_CENTER.y + (SCREEN_CENTER.y - tumEventGetMouseY()) /	
+		(double) RATION_CURSER_CENTER;
+	
+	// update all objects' coordinates according to new screen center
+	PositionProperties__adjustPositionToNewScreenCenter(
+		Circle__getPositionProperties(circle), oldScreenCenter, *mobileScreenCenter);
+
+	PositionProperties__adjustPositionToNewScreenCenter(
+		Rectangle__getPositionProperties(rectangle), oldScreenCenter, *mobileScreenCenter);
+	Rectangle__updateCorner(rectangle);
+
+	PositionProperties__adjustPositionToNewScreenCenter(
+		Triangle__getPositionProperties(triangle), oldScreenCenter, *mobileScreenCenter);
+	Triangle__updateCorners(triangle);
+
+	PositionProperties__adjustPositionToNewScreenCenter(
+		Message__getPositionProperties(bottomMessage), oldScreenCenter, *mobileScreenCenter);
+	Message__updateCorner(bottomMessage);
+
+	PositionProperties__adjustPositionToNewScreenCenter(
+		Message__getPositionProperties(topMessage), oldScreenCenter, *mobileScreenCenter);
+	Message__updateCorner(topMessage);
+
+	PositionProperties__adjustPositionToNewScreenCenter(
+		Message__getPositionProperties(buttonPressMessage), oldScreenCenter, *mobileScreenCenter);
+	Message__updateCorner(buttonPressMessage);
+
+	PositionProperties__adjustPositionToNewScreenCenter(
+		Message__getPositionProperties(mouseCoordMessage), oldScreenCenter, *mobileScreenCenter);
+	Message__updateCorner(mouseCoordMessage);
+}
+
 void vRunningDisplayTask(void *pvParameters)
 {
 	// Task initializations:
@@ -169,20 +214,23 @@ void vRunningDisplayTask(void *pvParameters)
     prevWakeTime = xLastWakeTime;
     initialWakeTime = xLastWakeTime;
 
+	//Center of the screen that is moved around by the mouse cursor
+	coord_t mobileScreenCenter = SCREEN_CENTER;
+
     // Create three shapes
-    Circle_h_t circle = Circle__init((coord_t) {SCREEN_CENTER.x - DISTANCE_TO_TRIANGLE, SCREEN_CENTER.y},
+    Circle_h_t circle = Circle__init((coord_t) {mobileScreenCenter.x - DISTANCE_TO_TRIANGLE, mobileScreenCenter.y},
                     	RADIUS_CIRCLE, TUMBlue);
 
-    Rectangle_h_t rectangle = Rectangle__init((coord_t) {SCREEN_CENTER.x + DISTANCE_TO_TRIANGLE, SCREEN_CENTER.y}, 
+    Rectangle_h_t rectangle = Rectangle__init((coord_t) {mobileScreenCenter.x + DISTANCE_TO_TRIANGLE, mobileScreenCenter.y}, 
                     		  HEIGHT_SQUARE, HEIGHT_SQUARE, Olive);
 
-    Triangle_h_t triangle = Triangle__init(SCREEN_CENTER, HEIGHT_TRIANGLE, Magenta);
+    Triangle_h_t triangle = Triangle__init(mobileScreenCenter, HEIGHT_TRIANGLE, Magenta);
 
 	//Create messages
-	Message_h_t bottomMessage = Message__init((coord_t) {SCREEN_CENTER.x, SCREEN_HEIGHT - DISTANCE_VERTICAL_TO_BORDER},
+	Message_h_t bottomMessage = Message__init((coord_t) {mobileScreenCenter.x, SCREEN_HEIGHT - DISTANCE_VERTICAL_TO_BORDER},
 				  							  "Hang loose or press [Q] to quit!", Black);
 
-	Message_h_t topMessage = Message__init((coord_t) {SCREEN_CENTER.x, DISTANCE_VERTICAL_TO_BORDER},
+	Message_h_t topMessage = Message__init((coord_t) {mobileScreenCenter.x, DISTANCE_VERTICAL_TO_BORDER},
 				  							"Hello, I can move!", Black);
 
 	//Create message for buttons and mouse coordinates
@@ -209,6 +257,11 @@ void vRunningDisplayTask(void *pvParameters)
 		xSemaphoreTake(ScreenLock, portMAX_DELAY);
 
 		tumDrawClear(White); // Clear screen
+
+		//Set mobileScreenCenter to coordinates indicated by mouse cursor
+		moveScreenInCursorDirection(&mobileScreenCenter, circle, rectangle, 
+				triangle, bottomMessage, topMessage, buttonPressMessage,
+				mouseCoordMessage);
 
 		//Draw all objects in appropriate position
 		updateShapeAndMessagePositions(circle, rectangle, topMessage, xLastWakeTime,

@@ -89,6 +89,19 @@ Triangle_h_t Triangle__init(coord_t center, PIXELS height, unsigned int color) {
 	return (Triangle_h_t) this;
 }
 
+int Triangle__updateCorners(Triangle_h_t handle) {
+	struct Triangle *this = (struct Triangle *) handle;
+
+	this->_corners[0] = (coord_t) {PositionProperties__getX(this->_positionProperties),
+			PositionProperties__getY(this->_positionProperties) - this->_height / 2};
+	this->_corners[1] = (coord_t) {PositionProperties__getX(this->_positionProperties) - this->_height / 2,
+			PositionProperties__getY(this->_positionProperties) + this->_height / 2};
+	this->_corners[2] = (coord_t) {PositionProperties__getX(this->_positionProperties) + this->_height / 2, 
+			PositionProperties__getY(this->_positionProperties) + this->_height / 2};
+
+	return 0;
+}
+
 PositionProperties_h_t Triangle__getPositionProperties(Triangle_h_t handle) {
 
 	return ((struct Triangle*) handle)->_positionProperties;
@@ -122,14 +135,15 @@ Message_h_t Message__init(coord_t center, char *text, unsigned int color) {
 
 Message_h_t Message__initTopLeftCorner(coord_t topLeftCorner, char *text, unsigned int color) {
 	struct Message *this = malloc(sizeof(struct Message));
-	
-	this->_positionProperties = PositionProperties__init(topLeftCorner.x + this->_textWidth / 2,
-														 topLeftCorner.y + this->_textHeight / 2,
-														 color);
+
 	this->_text = text;
 	tumGetTextSize(text, &(this->_textWidth), &(this->_textHeight));
 
 	this->_topLeftCorner = topLeftCorner;
+
+	this->_positionProperties = PositionProperties__init(topLeftCorner.x + this->_textWidth / 2,
+														 topLeftCorner.y + this->_textHeight / 2,
+														 color);
 
 	return (Message_h_t) this;
 }

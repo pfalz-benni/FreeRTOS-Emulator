@@ -9,11 +9,11 @@
  * position and shape of the center of that object.
  */
 struct PositionProperties {
-	PIXELS _x; /**< X pixel coord of center on screen */
-    PIXELS _y; /**< Y pixel coord of center on screen */
+	PIXELS _x; /**< X pixel coord relative to center on screen */
+    PIXELS _y; /**< Y pixel coord relative to center on screen */
 
-    float _f_x; /**< Absolute X location center */
-    float _f_y; /**< Absolute Y location center */    
+    float _f_x; /**< Absolute X location relative to center */
+    float _f_y; /**< Absolute Y location relative to center */    
 
     float _dx; /**< X axis speed in pixels/second */
     float _dy; /**< Y axis speed in pixels/second */
@@ -85,6 +85,20 @@ int PositionProperties__moveVetically(PositionProperties_h_t handle, float dx, P
 		this->_dx = -dx;
 
 	
+	return 0;
+}
+
+int PositionProperties__adjustPositionToNewScreenCenter(PositionProperties_h_t handle,
+		coord_t oldScreenCenter, coord_t newScreenCenter) {
+
+	struct PositionProperties *this = (struct PositionProperties *) handle;
+
+	this->_f_x = this->_f_x + oldScreenCenter.x - newScreenCenter.x;
+	this->_f_y = this->_f_y + oldScreenCenter.y - newScreenCenter.y;
+
+	this->_x = round(this->_f_x);
+	this->_y = round(this->_f_y);
+
 	return 0;
 }
 

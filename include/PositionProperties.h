@@ -35,6 +35,9 @@ int PositionProperties__setSpeedMoveOnCircle(PositionProperties_h_t handle, PIXE
 
 int PositionProperties__moveVetically(PositionProperties_h_t handle, float dx, PIXELS distanceToBorder);
 
+int PositionProperties__adjustPositionToNewScreenCenter(PositionProperties_h_t handle,
+		coord_t oldScreenCenter, coord_t newScreenCenter);
+
 PIXELS PositionProperties__getX(PositionProperties_h_t handle);
 PIXELS PositionProperties__getY(PositionProperties_h_t handle);
 unsigned int PositionProperties__getColor(PositionProperties_h_t handle);

@@ -38,6 +38,8 @@ typedef void *Triangle_h_t;
 
 Triangle_h_t Triangle__init(coord_t center, PIXELS height, unsigned int color);
 
+int Triangle__updateCorners(Triangle_h_t handle);
+
 PositionProperties_h_t Triangle__getPositionProperties(Triangle_h_t handle);
 coord_t* Triangle__getCorners(Triangle_h_t handle);
 
