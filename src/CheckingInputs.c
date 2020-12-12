@@ -7,13 +7,23 @@ void xGetButtonInput(void) {
 	}
 }
 
+void processStateChangeInput() {
+	if(xSemaphoreTake(changeState.lock, portMAX_DELAY) == pdTRUE) {
+		changeState.value = 1;
+		xSemaphoreGive(changeState.lock);
+	}
+}
+
 void checkAndProcessButtonPress(unsigned char keycode, TickType_t *lastPressTime, TickType_t *debounceDelay) {
 	if (buttons.buttons[keycode]) {
 		// if enough time since last counted button press has passed,
 		// the current button press is counted
 		if (xTaskGetTickCount() - *lastPressTime > *debounceDelay) {
-			if (xSemaphoreTake(buttonPressCount.lock, portMAX_DELAY) == pdTRUE) {
-				buttonPressCount.valuesABCD[keycode - OFFSET_KEYCODE_BUTTONPRESSCOUNT]++;
+			//button press E is treaded differently than the rest
+			if (keycode == KEYCODE(E)) {
+				processStateChangeInput();
+			} else if (xSemaphoreTake(buttonPressCount.lock, portMAX_DELAY) == pdTRUE) {
+				buttonPressCount.valuesABCD [keycode - OFFSET_KEYCODE_BUTTONPRESSCOUNT]++;
 				xSemaphoreGive(buttonPressCount.lock);
 			}
 			*lastPressTime = xTaskGetTickCount();
@@ -40,7 +50,7 @@ void resetButtonPressCountIfEntered() {
 }
 
 void vCheckingInputsTask(void *pvParameters) {
-	static TickType_t lastPressTimeA, lastPressTimeB, lastPressTimeC, lastPressTimeD = 0;
+	static TickType_t lastPressTimeA, lastPressTimeB, lastPressTimeC, lastPressTimeD, lastPressTimeE = 0;
 	static TickType_t debounceDelay = portTICK_PERIOD_MS * TIME_DEBOUNCE_BUTTON_MS;
 
 	while(1) {
@@ -59,6 +69,9 @@ void vCheckingInputsTask(void *pvParameters) {
 			checkAndProcessButtonPress(KEYCODE(B), &lastPressTimeB, &debounceDelay);
 			checkAndProcessButtonPress(KEYCODE(C), &lastPressTimeC, &debounceDelay);
 			checkAndProcessButtonPress(KEYCODE(D), &lastPressTimeD, &debounceDelay);
+
+			//Check for and process state change input
+			checkAndProcessButtonPress(KEYCODE(E), &lastPressTimeE, &debounceDelay);
 
 			resetButtonPressCountIfEntered();
 

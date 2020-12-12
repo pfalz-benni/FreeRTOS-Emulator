@@ -22,17 +22,21 @@
 #include "AsyncIO.h"
 
 #include "Shapes.h"
-#include "RunningDisplay.h"
+#include "MovingShapesDisplay.h"
 #include "CheckingInputs.h"
 #include "SharedResources.h"
+#include "StateMachine.h"
+#include "SwapBuffer.h"
 
 // FreeRTOS specific
 #define mainGENERIC_PRIORITY (tskIDLE_PRIORITY)
 #define mainGENERIC_STACK_SIZE ((unsigned short)2560)
 
 // Task handles
-static TaskHandle_t RunningDisplayTask = NULL;
-static TaskHandle_t CheckingInputsTask = NULL;
+TaskHandle_t MovingShapesDisplayTask = NULL;
+TaskHandle_t CheckingInputsTask = NULL;
+TaskHandle_t StateMachineTask = NULL;
+TaskHandle_t SwapBufferTask = NULL;
 
 // Variables that are declares as extern because they guard resources
 // and must therefore be used in different tasks in different
@@ -40,6 +44,7 @@ static TaskHandle_t CheckingInputsTask = NULL;
 SemaphoreHandle_t ScreenLock = NULL;
 buttons_buffer_t buttons = { 0 };
 buttonPresses_t buttonPressCount = { 0 };
+changeState_t changeState = { 0 };
 
 
 int main(int argc, char *argv[])
@@ -81,11 +86,31 @@ int main(int argc, char *argv[])
 		goto err_buttonpresscount_lock;
 	}
 
-	if (xTaskCreate(vRunningDisplayTask, "RunningDisplayTask",
+    changeState.lock = xSemaphoreCreateMutex();
+	if (!changeState.lock) {
+		PRINT_ERROR("Failed to create changeState lock");
+		goto err_changestate_lock;
+	}
+
+    if (xTaskCreate(vSwapBufferTask, "SwapBufferTask",
+			mainGENERIC_STACK_SIZE * 2, NULL, configMAX_PRIORITIES,
+			&StateMachineTask) != pdPASS) {
+		PRINT_ERROR("Failed to create 'SwapBufferTask'");
+		goto err_swapbuffer_task;
+	}
+
+    if (xTaskCreate(vStateMachineTask, "StateMachineTask",
+			mainGENERIC_STACK_SIZE * 2, NULL, configMAX_PRIORITIES - 1,
+			&StateMachineTask) != pdPASS) {
+		PRINT_ERROR("Failed to create 'StateMachineTask'");
+		goto err_statemachine_task;
+	}
+
+	if (xTaskCreate(vMovingShapesDisplayTask, "MovingShapesDisplayTask",
 			mainGENERIC_STACK_SIZE * 2, NULL, mainGENERIC_PRIORITY,
-			&RunningDisplayTask) != pdPASS) {
-		PRINT_ERROR("Failed to create 'RunningDisplayTask'");
-		goto err_runningdisplaytask;
+			&MovingShapesDisplayTask) != pdPASS) {
+		PRINT_ERROR("Failed to create 'MovingShapesDisplayTask'");
+		goto err_movingshapesdisplay_task;
 	}
 
 	if (xTaskCreate(vCheckingInputsTask, "CheckingInputsTask",
@@ -93,8 +118,13 @@ int main(int argc, char *argv[])
 			&CheckingInputsTask) != pdPASS) {
 		PRINT_ERROR("Failed to create 'CheckingInputsTask'");
         //could use something like on master TASK_PRINT_ERROR
-		goto err_checkinginputstask;
+		goto err_checkinginputs_task;
 	}
+
+    //Suspending diffent tasks because they are managed 
+    //from inside the state machine task
+    vTaskSuspend(MovingShapesDisplayTask);
+
 
 	printf("Numer of tasks: %lu\n\n", uxTaskGetNumberOfTasks());
 	tumFUtilPrintTaskStateList();
@@ -104,9 +134,15 @@ int main(int argc, char *argv[])
 
 	return EXIT_SUCCESS;
 
-err_checkinginputstask:
-    vTaskDelete(vRunningDisplayTask);
-err_runningdisplaytask:
+err_checkinginputs_task:
+    vTaskDelete(vMovingShapesDisplayTask);
+err_movingshapesdisplay_task:
+    vTaskDelete(vStateMachineTask);
+err_statemachine_task:
+    vTaskDelete(vSwapBufferTask);
+err_swapbuffer_task:
+    vSemaphoreDelete(changeState.lock);
+err_changestate_lock:
 	vSemaphoreDelete(buttonPressCount.lock);
 err_buttonpresscount_lock:
 	vSemaphoreDelete(ScreenLock);

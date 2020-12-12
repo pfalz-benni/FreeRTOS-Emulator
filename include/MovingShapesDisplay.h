@@ -1,9 +1,9 @@
 /**
- * @file RunningDisplay.h
+ * @file MovingShapesDisplay.h
  * @author Benedikt Witteler
- * @date 07 November 2020
- * @brief Functionality used in vRunningDisplayTask() that creates all the
- * content that's drawn on the screen.
+ * @date 07 December 2020
+ * @brief Functionality used in vMovingShapesDisplayTask() that creates all the
+ * content that's drawn on the screen for exercis 2 with the moving shapes and texts.
  */
 
 #ifndef __RUNNING_DISPLAY_H__
@@ -33,7 +33,7 @@
  */
 #define RATION_CURSER_CENTER 5
 
-#define TIME_RUNNINGDISPLAYTASK_DELAY_MS 20
+#define TIME_MOVINGSHAPESDISPLAYTASK_DELAY_MS 20
 
 extern SemaphoreHandle_t ScreenLock;
 extern buttonPresses_t buttonPressCount;
@@ -53,6 +53,6 @@ void moveScreenInCursorDirection(coord_t *mobileScreenCenter, Circle_h_t circle,
 		Rectangle_h_t rectangle, Triangle_h_t triangle, Message_h_t bottomMessage,
 		Message_h_t topMessage, Message_h_t buttonPressMessage, Message_h_t mouseCoordMessage);
 
-void vRunningDisplayTask(void *pvParameters);
+void vMovingShapesDisplayTask(void *pvParameters);
 
 #endif

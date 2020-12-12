@@ -1,7 +1,7 @@
 /**
  * @file SharedResources.h
  * @author Benedikt Witteler
- * @date 07 November 2020
+ * @date 07 December 2020
  * @brief Definition of structures that guard shared resources using
  * mutexes.
  */
@@ -41,7 +41,15 @@ typedef struct buttonPresses {
 	SemaphoreHandle_t lock;
 } buttonPresses_t;
 
-
+/**
+ * @brief Contatins information, wheather a state change is indicated or not.
+ * 
+ * value = 1 indicates a state change, 0 no state change.
+ */
+typedef struct changeState {
+    unsigned int value;
+    SemaphoreHandle_t lock;
+} changeState_t;
 
 
 #endif

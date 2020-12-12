@@ -1,4 +1,4 @@
-#include "RunningDisplay.h"
+#include "MovingShapesDisplay.h"
 
 void updateShapeAndMessagePositions(Circle_h_t circle, Rectangle_h_t rectangle, Message_h_t topMessage,
 									TickType_t xLastWakeTime, TickType_t prevWakeTime, TickType_t initialWakeTime) {
@@ -116,7 +116,7 @@ void moveScreenInCursorDirection(coord_t *mobileScreenCenter, Circle_h_t circle,
 	Message__updateCorner(mouseCoordMessage);
 }
 
-void vRunningDisplayTask(void *pvParameters) {
+void vMovingShapesDisplayTask(void *pvParameters) {
 	// Task initializations:
     TickType_t xLastWakeTime, prevWakeTime, initialWakeTime;
     xLastWakeTime = xTaskGetTickCount();
@@ -150,16 +150,7 @@ void vRunningDisplayTask(void *pvParameters) {
 										COORD_BUTTON_PRESS_MESSAGE.y + Message__getTextHeight(buttonPressMessage)},
 										"X-axis: 0 |  Y-axis: 0", Black);
 
-
-	// Needed such that Gfx library knows which thread controlls drawing
-	// Only one thread can call tumDrawUpdateScreen while and thread can call
-	// the drawing functions to draw objects. This is a limitation of the SDL
-	// backend.
-	tumDrawBindThread();
-
 	while (1) {
-		tumEventFetchEvents(FETCH_EVENT_NONBLOCK); // Query events backend for new events, ie. button presses
-
         xLastWakeTime = xTaskGetTickCount();
 
 		//Screen manipulatoins
@@ -180,13 +171,10 @@ void vRunningDisplayTask(void *pvParameters) {
 		drawButtonPressMessage(buttonPressMessage, buttonPressCount);
 		drawMouseCoordMessage(mouseCoordMessage);
 
-		tumDrawUpdateScreen(); // Refresh the screen
-							   // Everything written on the screen before landet in some kind of back buffer
-
 		xSemaphoreGive(ScreenLock);
 
 		// Basic sleep to free CPU
-		vTaskDelay(portTICK_PERIOD_MS * TIME_RUNNINGDISPLAYTASK_DELAY_MS);
+		vTaskDelay(portTICK_PERIOD_MS * TIME_MOVINGSHAPESDISPLAYTASK_DELAY_MS);
 
         prevWakeTime = xLastWakeTime; // to keep track of time intervalls
 	}

@@ -1,7 +1,7 @@
 /**
  * @file CheckingInputs.h
  * @author Benedikt Witteler
- * @date 07 November 2020
+ * @date 07 December 2020
  * @brief Functionality used in  vCheckingInputsTask() that handles
  * inputs form the keyboard.
  */
@@ -26,8 +26,11 @@
 
 extern buttons_buffer_t buttons;
 extern buttonPresses_t buttonPressCount;
+extern changeState_t changeState;
 
 void xGetButtonInput(void);
+
+void processStateChangeInput();
 
 void checkAndProcessButtonPress(unsigned char keycode, TickType_t *lastPressTime, TickType_t *debounceDelay);
 
