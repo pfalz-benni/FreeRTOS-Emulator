@@ -32,6 +32,12 @@ void vStateMachineTask(void *pvParameters) {
                         //suspend 4.x tasks
                         if (MovingShapesDisplayTask) {
                             vTaskResume(MovingShapesDisplayTask);
+                            //set flag that task knows it has been resumed and can
+                            //adjust accordingly
+                            if (xSemaphoreTake(movingShapesDisplayTaskResumed.lock, portMAX_DELAY) == pdTRUE) {
+                                movingShapesDisplayTaskResumed.value = 1;
+                                xSemaphoreGive(movingShapesDisplayTaskResumed.lock);
+                            }
                         }
                         break;
                     //TODO Make sure to give back all mutexes in order not to create deadlocks!!!

@@ -15,17 +15,6 @@
 
 #include "SharedResources.h"
 
-extern TaskHandle_t MovingShapesDisplayTask;
-extern TaskHandle_t CheckingInputsTask;
-extern TaskHandle_t StateMachineTask;
-
-extern changeState_t changeState;
-
-extern buttonPresses_t buttonPressCount;
-extern SemaphoreHandle_t ScreenLock;
-extern buttons_buffer_t buttons;
-
-
 
 void vStateMachineTask(void *pvParameters);
 

@@ -1,5 +1,33 @@
 #include "MovingShapesDisplay.h"
 
+//Pointers to pointers have to be passed as variables for the shape
+//objects because they are not only adapted but actually newly created.
+//As a result the adresses pointed to have to be edited, hence be passed by refetence
+void resetMovingObjectsAfterResumption(Circle_h_t *circle, Rectangle_h_t *rectangle, Message_h_t *topMessage,
+			   coord_t *mobileScreenCenter, TickType_t *xLastWakeTime, TickType_t *initialWakeTime) {
+	if(xSemaphoreTake(movingShapesDisplayTaskResumed.lock, portMAX_DELAY) == pdTRUE) {
+		if (movingShapesDisplayTaskResumed.value) {
+			Circle__destruct(circle);
+			Rectangle__destruct(rectangle);
+			Message__destruct(topMessage);
+
+			*circle = Circle__init((coord_t) {mobileScreenCenter->x - DISTANCE_TO_TRIANGLE, mobileScreenCenter->y},
+									RADIUS_CIRCLE, TUMBlue);
+			*rectangle = Rectangle__init((coord_t) {mobileScreenCenter->x + DISTANCE_TO_TRIANGLE, mobileScreenCenter->y}, 
+										HEIGHT_SQUARE, HEIGHT_SQUARE, Olive);
+			*topMessage = Message__init((coord_t) {mobileScreenCenter->x,
+					mobileScreenCenter->y - SCREEN_CENTER.y + DISTANCE_VERTICAL_TO_BORDER},
+					"Hello, I can move!", Black);
+
+			*initialWakeTime = *xLastWakeTime;
+
+			movingShapesDisplayTaskResumed.value = 0;
+		}
+		xSemaphoreGive(movingShapesDisplayTaskResumed.lock);
+	}
+
+}
+
 void updateShapeAndMessagePositions(Circle_h_t circle, Rectangle_h_t rectangle, Message_h_t topMessage,
 									TickType_t xLastWakeTime, TickType_t prevWakeTime, TickType_t initialWakeTime) {
 	PositionProperties__setSpeedMoveOnCircle(Circle__getPositionProperties(circle),
@@ -82,9 +110,9 @@ void moveScreenInCursorDirection(coord_t *mobileScreenCenter, Circle_h_t circle,
 	coord_t oldScreenCenter = *mobileScreenCenter;
 
 	// calculate position of new screen center depending on cursor position
-	mobileScreenCenter->x = SCREEN_CENTER.x + (SCREEN_CENTER.x - tumEventGetMouseX()) / 
+	mobileScreenCenter->x = SCREEN_CENTER.x - (SCREEN_CENTER.x - tumEventGetMouseX()) / 
 		(double) RATION_CURSER_CENTER;
-	mobileScreenCenter->y = SCREEN_CENTER.y + (SCREEN_CENTER.y - tumEventGetMouseY()) /	
+	mobileScreenCenter->y = SCREEN_CENTER.y - (SCREEN_CENTER.y - tumEventGetMouseY()) /	
 		(double) RATION_CURSER_CENTER;
 	
 	// update all objects' coordinates according to new screen center
@@ -139,8 +167,9 @@ void vMovingShapesDisplayTask(void *pvParameters) {
 	Message_h_t bottomMessage = Message__init((coord_t) {mobileScreenCenter.x, SCREEN_HEIGHT - DISTANCE_VERTICAL_TO_BORDER},
 				  							  "Hang loose or press [Q] to quit!", Black);
 
-	Message_h_t topMessage = Message__init((coord_t) {mobileScreenCenter.x, DISTANCE_VERTICAL_TO_BORDER},
-				  							"Hello, I can move!", Black);
+	Message_h_t topMessage = Message__init((coord_t) {mobileScreenCenter.x,
+			mobileScreenCenter.y - SCREEN_CENTER.y + DISTANCE_VERTICAL_TO_BORDER},
+			"Hello, I can move!", Black);
 
 	//Create message for buttons and mouse coordinates
 	Message_h_t buttonPressMessage = Message__initTopLeftCorner(COORD_BUTTON_PRESS_MESSAGE,
@@ -151,7 +180,7 @@ void vMovingShapesDisplayTask(void *pvParameters) {
 										"X-axis: 0 |  Y-axis: 0", Black);
 
 	while (1) {
-        xLastWakeTime = xTaskGetTickCount();
+		xLastWakeTime = xTaskGetTickCount();
 
 		//Screen manipulatoins
 		xSemaphoreTake(ScreenLock, portMAX_DELAY);
@@ -162,10 +191,17 @@ void vMovingShapesDisplayTask(void *pvParameters) {
 		moveScreenInCursorDirection(&mobileScreenCenter, circle, rectangle, 
 				triangle, bottomMessage, topMessage, buttonPressMessage,
 				mouseCoordMessage);
-
-		//Draw all objects in appropriate position
+		
+		//update positions before drawing objcts
 		updateShapeAndMessagePositions(circle, rectangle, topMessage, xLastWakeTime,
 									   prevWakeTime, initialWakeTime);
+
+		//reset moving objects if task has been resumed after
+		//it has been suspended
+		resetMovingObjectsAfterResumption(&circle, &rectangle, &topMessage, &mobileScreenCenter,
+						   &xLastWakeTime, &initialWakeTime);
+
+		//Draw all objects in appropriate position
 		drawShapes(circle, rectangle, triangle);
 		drawSimpleTextMessages(topMessage, bottomMessage);
 		drawButtonPressMessage(buttonPressMessage, buttonPressCount);

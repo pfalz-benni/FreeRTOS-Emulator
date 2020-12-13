@@ -21,6 +21,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "TUM_Draw.h"
 
@@ -36,6 +37,9 @@
 typedef void *PositionProperties_h_t;
 
 PositionProperties_h_t PositionProperties__init(PIXELS x, PIXELS y, unsigned int color);
+int PositionProperties__destruct(PositionProperties_h_t *handle);
+
+int PositionProperties__resetPositionAndSpeed(PositionProperties_h_t handle);
 
 int PositionProperties__setPosition(PositionProperties_h_t handle, float f_x, float f_y);
 

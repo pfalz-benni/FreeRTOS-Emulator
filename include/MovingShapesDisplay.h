@@ -35,8 +35,6 @@
 
 #define TIME_MOVINGSHAPESDISPLAYTASK_DELAY_MS 20
 
-extern SemaphoreHandle_t ScreenLock;
-extern buttonPresses_t buttonPressCount;
 
 void updateShapeAndMessagePositions(Circle_h_t circle, Rectangle_h_t rectangle, Message_h_t topMessage,
 									TickType_t xLastWakeTime, TickType_t prevWakeTime, TickType_t initialWakeTime);

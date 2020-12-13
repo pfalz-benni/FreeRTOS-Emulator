@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include "PositionProperties.h"
 
 /**
@@ -35,6 +33,26 @@ PositionProperties_h_t PositionProperties__init(PIXELS x, PIXELS y, unsigned int
 	this->_color = color;
 
 	return (PositionProperties_h_t) this;
+}
+
+int PositionProperties__destruct(PositionProperties_h_t *handle) {
+	free((struct PositionProperties *) *handle);
+	*handle = NULL;
+	
+	return 0;
+}
+
+int PositionProperties__resetPositionAndSpeed(PositionProperties_h_t handle) {
+	struct PositionProperties *this = (struct PositionProperties *) handle;
+
+	this->_x = 0;
+	this->_y = 0;
+	this->_f_x = 0;
+	this->_f_y = 0;
+	this->_dx = 0;
+	this->_dy = 0;
+
+	return 0;
 }
 
 int PositionProperties__setPosition(PositionProperties_h_t handle, float f_x, float f_y) {
@@ -93,8 +111,8 @@ int PositionProperties__adjustPositionToNewScreenCenter(PositionProperties_h_t h
 
 	struct PositionProperties *this = (struct PositionProperties *) handle;
 
-	this->_f_x = this->_f_x + oldScreenCenter.x - newScreenCenter.x;
-	this->_f_y = this->_f_y + oldScreenCenter.y - newScreenCenter.y;
+	this->_f_x = this->_f_x + newScreenCenter.x - oldScreenCenter.x;
+	this->_f_y = this->_f_y + newScreenCenter.y - oldScreenCenter.y;
 
 	this->_x = round(this->_f_x);
 	this->_y = round(this->_f_y);

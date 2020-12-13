@@ -22,7 +22,6 @@
 
 #define TIME_FRAMERATE_PERIOD_MS (TickType_t) 20
 
-extern SemaphoreHandle_t ScreenLock;
 
 void vSwapBufferTask(void *pvParameters);
 

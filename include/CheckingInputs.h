@@ -24,9 +24,6 @@
 
 #define TIME_CHECKINGINPUTSTASK_DELAY_MS 40
 
-extern buttons_buffer_t buttons;
-extern buttonPresses_t buttonPressCount;
-extern changeState_t changeState;
 
 void xGetButtonInput(void);
 

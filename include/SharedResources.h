@@ -42,14 +42,30 @@ typedef struct buttonPresses {
 } buttonPresses_t;
 
 /**
- * @brief Contatins information, wheather a state change is indicated or not.
+ * @brief Contatins information, wheather a change of some generic
+ * kind has happend.
  * 
  * value = 1 indicates a state change, 0 no state change.
+ * Examples of state changes expressed: state the state machine is in
+ * indicating the display mode, information wheather a task has
+ * been resumed (after it has been suspended) or not
  */
-typedef struct changeState {
+typedef struct genericBinaryState {
     unsigned int value;
     SemaphoreHandle_t lock;
-} changeState_t;
+} genericBinaryState_t;
 
+
+// All the globally used variables declared in main.c
+extern TaskHandle_t MovingShapesDisplayTask;
+extern TaskHandle_t CheckingInputsTask;
+extern TaskHandle_t StateMachineTask;
+extern TaskHandle_t SwapBufferTask;
+
+extern SemaphoreHandle_t ScreenLock;
+extern buttons_buffer_t buttons;
+extern buttonPresses_t buttonPressCount;
+extern genericBinaryState_t changeState;
+extern genericBinaryState_t movingShapesDisplayTaskResumed;
 
 #endif

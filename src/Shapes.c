@@ -16,6 +16,14 @@ Circle_h_t Circle__init(coord_t center, PIXELS radius, unsigned int color) {
 	return (Circle_h_t) this;
 }
 
+int Circle__destruct(Circle_h_t *handle) {
+	PositionProperties__destruct(&((struct Circle *) *handle)->_positionProperties);
+	free((struct Circle *) *handle);
+	*handle = NULL;
+
+	return 0;
+}
+
 PositionProperties_h_t Circle__getPositionProperties(Circle_h_t handle) {
 	return ((struct Circle*) handle)->_positionProperties;
 }
@@ -41,6 +49,14 @@ Rectangle_h_t Rectangle__init(coord_t center, PIXELS width, PIXELS height, unsig
 	this->_height = height;
 
 	return (Rectangle_h_t) this;
+}
+
+int Rectangle__destruct(Rectangle_h_t *handle) {
+	PositionProperties__destruct(&((struct Rectangle *) *handle)->_positionProperties);
+	free((struct Rectangle *) *handle);
+	*handle = NULL;
+
+	return 0;
 }
 
 int Rectangle__updateCorner(Rectangle_h_t handle){
@@ -88,6 +104,14 @@ Triangle_h_t Triangle__init(coord_t center, PIXELS height, unsigned int color) {
 	return (Triangle_h_t) this;
 }
 
+int Triangle__destruct(Triangle_h_t *handle) {
+	PositionProperties__destruct(&((struct Triangle *) *handle)->_positionProperties);
+	free((struct Triangle *) *handle);
+	*handle = NULL;
+
+	return 0;
+}
+
 int Triangle__updateCorners(Triangle_h_t handle) {
 	struct Triangle *this = (struct Triangle *) handle;
 
@@ -130,6 +154,14 @@ Message_h_t Message__init(coord_t center, char *text, unsigned int color) {
 	this->_topLeftCorner = (coord_t) {center.x - this->_textWidth / 2, center.y - this->_textHeight / 2};
 
 	return (Message_h_t) this;
+}
+
+int Message__destruct(Message_h_t *handle) {
+	PositionProperties__destruct(&((struct Message *) *handle)->_positionProperties);
+	free((struct Message *) *handle);
+	*handle = NULL;
+
+	return 0;
 }
 
 Message_h_t Message__initTopLeftCorner(coord_t topLeftCorner, char *text, unsigned int color) {

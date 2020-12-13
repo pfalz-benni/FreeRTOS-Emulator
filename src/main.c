@@ -44,7 +44,15 @@ TaskHandle_t SwapBufferTask = NULL;
 SemaphoreHandle_t ScreenLock = NULL;
 buttons_buffer_t buttons = { 0 };
 buttonPresses_t buttonPressCount = { 0 };
-changeState_t changeState = { 0 };
+/**
+ * Infomation wheather the state machien has changed state or not
+ */
+genericBinaryState_t changeState = { 0 };
+/**
+ * Infomation wheather the MovingShapesDisplayTask() has been resumed
+ * (after it has been suspended) or not
+ */
+genericBinaryState_t movingShapesDisplayTaskResumed = { 0 };
 
 
 int main(int argc, char *argv[])
@@ -90,6 +98,12 @@ int main(int argc, char *argv[])
 	if (!changeState.lock) {
 		PRINT_ERROR("Failed to create changeState lock");
 		goto err_changestate_lock;
+	}
+
+	movingShapesDisplayTaskResumed.lock = xSemaphoreCreateMutex();
+	if (!movingShapesDisplayTaskResumed.lock) {
+		PRINT_ERROR("Failed to create movingShapesDisplayTaskResumed lock");
+		goto err_movingShapesDisplayTaskResumed_lock;
 	}
 
     if (xTaskCreate(vSwapBufferTask, "SwapBufferTask",
@@ -141,6 +155,8 @@ err_movingshapesdisplay_task:
 err_statemachine_task:
     vTaskDelete(vSwapBufferTask);
 err_swapbuffer_task:
+	vSemaphoreDelete(movingShapesDisplayTaskResumed.lock);
+err_movingShapesDisplayTaskResumed_lock:
     vSemaphoreDelete(changeState.lock);
 err_changestate_lock:
 	vSemaphoreDelete(buttonPressCount.lock);
