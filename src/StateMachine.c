@@ -1,5 +1,11 @@
 #include "StateMachine.h"
 
+void clearScreen() {
+    xSemaphoreTake(ScreenLock, portMAX_DELAY);
+	tumDrawClear(White); // Clear screen
+    xSemaphoreGive(ScreenLock);
+}
+
 void vStateMachineTask(void *pvParameters) {
     enum states {stateOne = 1, stateTwo, stateThree};
     int currentState = stateOne;
@@ -18,14 +24,34 @@ void vStateMachineTask(void *pvParameters) {
                 switch (currentState) {
                     case stateOne:
                         currentState = stateTwo;
+                        //suspend 2.x task
                         if (MovingShapesDisplayTask) {
                             vTaskSuspend(MovingShapesDisplayTask);
                         }
                         //resume 3.2 tasks
+                        if (BlinkingButtonsDrawTask) {
+                            vTaskResume(BlinkingButtonsDrawTask);
+                        }
+                        if (BlinkingButtonsDynamicTask) {
+                            vTaskResume(BlinkingButtonsDynamicTask);
+                        }
+                        if (BlinkingButtonsStaticTask) {
+                            vTaskResume(BlinkingButtonsStaticTask);
+                        }
                         break;
                     case stateTwo:
                         currentState = stateThree;
-                        //suspend and resume tasks
+                        //suspend 3.2 tasks
+                        if (BlinkingButtonsDrawTask) {
+                            vTaskSuspend(BlinkingButtonsDrawTask);
+                        }
+                        if (BlinkingButtonsDynamicTask) {
+                            vTaskSuspend(BlinkingButtonsDynamicTask);
+                        }
+                        if (BlinkingButtonsStaticTask) {
+                            vTaskSuspend(BlinkingButtonsStaticTask);
+                        }
+                        //resume 4.x tasks
                         break;
                     case stateThree:
                         currentState = stateOne;

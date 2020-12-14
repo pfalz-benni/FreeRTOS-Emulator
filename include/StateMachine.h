@@ -14,8 +14,10 @@
 #include "semphr.h"
 
 #include "SharedResources.h"
+#include "TUM_Draw.h"
 
 
+void clearScreen();
 void vStateMachineTask(void *pvParameters);
 
 

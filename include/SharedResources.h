@@ -61,6 +61,9 @@ extern TaskHandle_t MovingShapesDisplayTask;
 extern TaskHandle_t CheckingInputsTask;
 extern TaskHandle_t StateMachineTask;
 extern TaskHandle_t SwapBufferTask;
+extern TaskHandle_t BlinkingButtonsDrawTask;
+extern TaskHandle_t BlinkingButtonsDynamicTask;
+extern TaskHandle_t BlinkingButtonsStaticTask;
 
 extern SemaphoreHandle_t ScreenLock;
 extern buttons_buffer_t buttons;

@@ -27,16 +27,24 @@
 #include "SharedResources.h"
 #include "StateMachine.h"
 #include "SwapBuffer.h"
+#include "BlinkingButtons.h"
 
 // FreeRTOS specific
 #define mainGENERIC_PRIORITY (tskIDLE_PRIORITY)
 #define mainGENERIC_STACK_SIZE ((unsigned short)2560)
+
+#define STACK_SIZE_STATIC 200 
+
 
 // Task handles
 TaskHandle_t MovingShapesDisplayTask = NULL;
 TaskHandle_t CheckingInputsTask = NULL;
 TaskHandle_t StateMachineTask = NULL;
 TaskHandle_t SwapBufferTask = NULL;
+TaskHandle_t BlinkingButtonsDrawTask = NULL; //exercise 3.2.2
+TaskHandle_t BlinkingButtonsDynamicTask = NULL; //exercise 3.2.2
+TaskHandle_t BlinkingButtonsStaticTask = NULL; //exercise 3.2.2
+
 
 // Variables that are declares as extern because they guard resources
 // and must therefore be used in different tasks in different
@@ -53,6 +61,44 @@ genericBinaryState_t changeState = { 0 };
  * (after it has been suspended) or not
  */
 genericBinaryState_t movingShapesDisplayTaskResumed = { 0 };
+
+
+//Staic task allocation
+/**
+ * Structure that holds the task's data structures (TCB) of the
+ * statically created task vBlinkingButtonsStaticTask()
+ */
+StaticTask_t xTaskBuffer;
+/**
+ * Buffer that vBlinkingButtonsStaticTask() will use as its stack
+ */
+StackType_t xStack[ STACK_SIZE_STATIC ];
+
+/* configSUPPORT_STATIC_ALLOCATION is set to 1, so the application must provide an
+implementation of vApplicationGetIdleTaskMemory() to provide the memory that is
+used by the Idle task. */
+void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
+                                    StackType_t **ppxIdleTaskStackBuffer,
+                                    uint32_t *pulIdleTaskStackSize )
+{
+/* If the buffers to be provided to the Idle task are declared inside this
+function then they must be declared static – otherwise they will be allocated on
+the stack and so not exists after this function exits. */
+static StaticTask_t xIdleTaskTCB;
+static StackType_t uxIdleTaskStack[ configMINIMAL_STACK_SIZE ];
+
+    /* Pass out a pointer to the StaticTask_t structure in which the Idle task’s
+    state will be stored. */
+    *ppxIdleTaskTCBBuffer = &xIdleTaskTCB;
+
+    /* Pass out the array that will be used as the Idle task’s stack. */
+    *ppxIdleTaskStackBuffer = uxIdleTaskStack;
+
+    /* Pass out the size of the array pointed to by *ppxIdleTaskStackBuffer.
+    Note that, as the array is necessarily of type StackType_t,
+    configMINIMAL_STACK_SIZE is specified in words, not bytes. */
+    *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+}
 
 
 int main(int argc, char *argv[])
@@ -135,9 +181,34 @@ int main(int argc, char *argv[])
 		goto err_checkinginputs_task;
 	}
 
+	if (xTaskCreate(vBlinkingButtonsDrawTask, "BlinkingButtonsDrawTask",
+			mainGENERIC_STACK_SIZE, NULL, mainGENERIC_PRIORITY,
+			&BlinkingButtonsDrawTask) != pdPASS) {
+		PRINT_ERROR("Failed to create 'BlinkingButtonsDrawTask'");
+		goto err_blinkingbuttonsdrawtask_task;
+	}
+
+	if (xTaskCreate(vBlinkingButtonsDynamicTask, "BlinkingButtonsDynamicTask",
+			mainGENERIC_STACK_SIZE, NULL, mainGENERIC_PRIORITY,
+			&BlinkingButtonsDynamicTask) != pdPASS) {
+		PRINT_ERROR("Failed to create 'BlinkingButtonsDynamicTask'");
+		goto err_blinkingbuttonsdynamic_task;
+	}
+
+	BlinkingButtonsStaticTask = xTaskCreateStatic(vBlinkingButtonsStaticTask,
+			"BlinkingButtonsStaticTask", STACK_SIZE_STATIC, NULL,
+			mainGENERIC_PRIORITY, xStack , &xTaskBuffer);
+	if (!BlinkingButtonsStaticTask) {
+		PRINT_ERROR("Failed to create 'BlinkingButtonsStaticTask'");
+		goto err_blinkingbuttonsstatic_task;
+	}
+
     //Suspending diffent tasks because they are managed 
     //from inside the state machine task
     vTaskSuspend(MovingShapesDisplayTask);
+	vTaskSuspend(BlinkingButtonsDrawTask);
+	vTaskSuspend(BlinkingButtonsDynamicTask);
+	vTaskSuspend(BlinkingButtonsStaticTask);
 
 
 	printf("Numer of tasks: %lu\n\n", uxTaskGetNumberOfTasks());
@@ -148,12 +219,19 @@ int main(int argc, char *argv[])
 
 	return EXIT_SUCCESS;
 
+
+err_blinkingbuttonsstatic_task:
+	vTaskDelete(BlinkingButtonsDynamicTask);
+err_blinkingbuttonsdynamic_task:
+	vTaskDelete(BlinkingButtonsDrawTask);
+err_blinkingbuttonsdrawtask_task:
+	vTaskDelete(CheckingInputsTask);
 err_checkinginputs_task:
-    vTaskDelete(vMovingShapesDisplayTask);
+    vTaskDelete(MovingShapesDisplayTask);
 err_movingshapesdisplay_task:
-    vTaskDelete(vStateMachineTask);
+    vTaskDelete(StateMachineTask);
 err_statemachine_task:
-    vTaskDelete(vSwapBufferTask);
+    vTaskDelete(SwapBufferTask);
 err_swapbuffer_task:
 	vSemaphoreDelete(movingShapesDisplayTaskResumed.lock);
 err_movingShapesDisplayTaskResumed_lock:
