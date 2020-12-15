@@ -32,6 +32,7 @@ int validateButtonPress(unsigned char keycode, TickType_t *lastPressTime, TickTy
 void processButtonPressABCD(unsigned char keycode);
 void processButtonPressN();
 void processButtonPressS();
+void controlCountingSecondsTask();
 
 void resetButtonPressCountIfEntered();
 

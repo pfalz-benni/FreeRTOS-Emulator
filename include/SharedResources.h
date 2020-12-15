@@ -43,18 +43,20 @@ typedef struct buttonPresses {
 } buttonPresses_t;
 
 /**
- * @brief Contatins information, wheather a change of some generic
- * kind has happend.
+ * @brief Contatins an integer variable that is a shared ressource 
+ * and therefore guarded by a mutex.
  * 
+ * Can also be used as a boolean/binary Variable indication some
+ * kind of state change:
  * value = 1 indicates a state change, 0 no state change.
- * Examples of state changes expressed: state the state machine is in
- * indicating the display mode, information wheather a task has
+ * Examples of state changes expressed: state wheather the state machine 
+ * must switch change its state, information wheather a task has
  * been resumed (after it has been suspended) or not
  */
-typedef struct genericBinaryState {
-    unsigned int value;
+typedef struct sharedIntegerVariable {
+    int value;
     SemaphoreHandle_t lock;
-} genericBinaryState_t;
+} sharedIntegerVariable_t;
 
 
 // All the globally used variables declared in main.c
@@ -68,13 +70,15 @@ extern TaskHandle_t BlinkingButtonsStaticTask;
 extern TaskHandle_t ButtonPressSemaphoreTask;
 extern TaskHandle_t ButtonPressNotificationTask;
 extern TaskHandle_t ButtonPressResetTask;
+extern TaskHandle_t CountingSecondsTask;
 
 extern SemaphoreHandle_t ScreenLock;
 extern SemaphoreHandle_t ButtonSPressed;
 extern buttons_buffer_t buttons;
 extern buttonPresses_t buttonPressCountABCD;
-extern genericBinaryState_t changeState;
-extern genericBinaryState_t movingShapesDisplayTaskResumed;
+extern sharedIntegerVariable_t changeState;
+extern sharedIntegerVariable_t movingShapesDisplayTaskResumed;
+extern sharedIntegerVariable_t secondsPassedTotal;
 extern buttonPresses_t buttonPressCountNS;
 extern TimerHandle_t deleteButtonCountNS;
 

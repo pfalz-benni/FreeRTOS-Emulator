@@ -48,6 +48,7 @@ TaskHandle_t BlinkingButtonsStaticTask = NULL; //exercise 3.2.2
 TaskHandle_t ButtonPressSemaphoreTask = NULL; //exercise 3.2.3
 TaskHandle_t ButtonPressNotificationTask = NULL; //exercise 3.2.3
 TaskHandle_t ButtonPressResetTask = NULL; //exercise 3.2.3
+TaskHandle_t CountingSecondsTask = NULL; //exercise 3.2.4
 
 
 // Variables that are declares as extern because they guard resources
@@ -61,12 +62,17 @@ buttonPresses_t buttonPressCountNS = { 0 }; //not the entire value array is used
 /**
  * Infomation wheather the state machien has changed state or not
  */
-genericBinaryState_t changeState = { 0 };
+sharedIntegerVariable_t changeState = { 0 };
 /**
  * Infomation wheather the MovingShapesDisplayTask() has been resumed
  * (after it has been suspended) or not
  */
-genericBinaryState_t movingShapesDisplayTaskResumed = { 0 };
+sharedIntegerVariable_t movingShapesDisplayTaskResumed = { 0 };
+/**
+ * Global variable being counted up every second unless counting
+ * is paused.
+ */
+sharedIntegerVariable_t secondsPassedTotal = { 0 };
 TimerHandle_t deleteButtonCountNS = NULL;
 
 
@@ -80,58 +86,6 @@ StaticTask_t xTaskBuffer;
  * Buffer that vBlinkingButtonsStaticTask() will use as its stack
  */
 StackType_t xStack[ STACK_SIZE_STATIC ];
-
-/* configSUPPORT_STATIC_ALLOCATION is set to 1, so the application must provide an
-implementation of vApplicationGetIdleTaskMemory() to provide the memory that is
-used by the Idle task. */
-void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
-                                    StackType_t **ppxIdleTaskStackBuffer,
-                                    uint32_t *pulIdleTaskStackSize )
-{
-/* If the buffers to be provided to the Idle task are declared inside this
-function then they must be declared static – otherwise they will be allocated on
-the stack and so not exists after this function exits. */
-static StaticTask_t xIdleTaskTCB;
-static StackType_t uxIdleTaskStack[ configMINIMAL_STACK_SIZE ];
-
-    /* Pass out a pointer to the StaticTask_t structure in which the Idle task’s
-    state will be stored. */
-    *ppxIdleTaskTCBBuffer = &xIdleTaskTCB;
-
-    /* Pass out the array that will be used as the Idle task’s stack. */
-    *ppxIdleTaskStackBuffer = uxIdleTaskStack;
-
-    /* Pass out the size of the array pointed to by *ppxIdleTaskStackBuffer.
-    Note that, as the array is necessarily of type StackType_t,
-    configMINIMAL_STACK_SIZE is specified in words, not bytes. */
-    *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
-}
-
-/* configSUPPORT_STATIC_ALLOCATION and configUSE_TIMERS are both set to 1, so the
-application must provide an implementation of vApplicationGetTimerTaskMemory()
-to provide the memory that is used by the Timer service task. */
-void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer,
-                                     StackType_t **ppxTimerTaskStackBuffer,
-                                     uint32_t *pulTimerTaskStackSize )
-{
-/* If the buffers to be provided to the Timer task are declared inside this
-function then they must be declared static – otherwise they will be allocated on
-the stack and so not exists after this function exits. */
-static StaticTask_t xTimerTaskTCB;
-static StackType_t uxTimerTaskStack[ configTIMER_TASK_STACK_DEPTH ];
-
-    /* Pass out a pointer to the StaticTask_t structure in which the Timer
-    task’s state will be stored. */
-    *ppxTimerTaskTCBBuffer = &xTimerTaskTCB;
-
-    /* Pass out the array that will be used as the Timer task’s stack. */
-    *ppxTimerTaskStackBuffer = uxTimerTaskStack;
-
-    /* Pass out the size of the array pointed to by *ppxTimerTaskStackBuffer.
-    Note that, as the array is necessarily of type StackType_t,
-    configTIMER_TASK_STACK_DEPTH is specified in words, not bytes. */
-    *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
-}
 
 
 int main(int argc, char *argv[])
@@ -196,6 +150,12 @@ int main(int argc, char *argv[])
 	if (!buttonPressCountNS.lock) {
 		PRINT_ERROR("Failed to create buttonPressCountNS lock");
 		goto err_buttonpresscountns_lock;
+	}
+
+	secondsPassedTotal.lock = xSemaphoreCreateMutex();
+	if (!secondsPassedTotal.lock) {
+		PRINT_ERROR("Failed to create secondsPassedTotal lock");
+		goto err_secondspassedtotal_lock;
 	}
 
 // ---------------TIMER----------------------------------------------
@@ -281,6 +241,13 @@ int main(int argc, char *argv[])
 		goto err_buttonpressreset_task;
 	}
 
+	if (xTaskCreate(vCountingSecondsTask, "CountingSecondsTask",
+			mainGENERIC_STACK_SIZE, NULL, mainGENERIC_PRIORITY,
+			&CountingSecondsTask) != pdPASS) {
+		PRINT_ERROR("Failed to create 'CountingSecondsTask'");
+		goto err_countingsecondstask_task;
+	}
+
     //Suspending diffent tasks because they are managed 
     //from inside the state machine task
     vTaskSuspend(MovingShapesDisplayTask);
@@ -303,6 +270,8 @@ int main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 
 
+err_countingsecondstask_task:
+	vTaskDelete(ButtonPressResetTask);
 err_buttonpressreset_task:
 	vTaskDelete(ButtonPressNotificationTask);
 err_buttonpressnotification_task:
@@ -324,6 +293,8 @@ err_statemachine_task:
 err_swapbuffer_task:
 	xTimerDelete(deleteButtonCountNS, 0);
 err_deletebuttoncountns_timer:
+	vSemaphoreDelete(secondsPassedTotal.lock);
+err_secondspassedtotal_lock:
 	vSemaphoreDelete(buttonPressCountNS.lock);
 err_buttonpresscountns_lock:
 	vSemaphoreDelete(ButtonSPressed);

@@ -61,10 +61,17 @@ void vDrawFPS(void) {
 
 void drawButtonsNSPressMessage(Message_h_t buttonsNSPressMessage, buttonPresses_t buttonPressCountNS) {
 	char formatedText[LENGTH_STRING_NS_DRAWN];
+    int secondsPassedTotalCopy;
+
+    if (xSemaphoreTake(secondsPassedTotal.lock, portMAX_DELAY == pdTRUE)) {
+        secondsPassedTotalCopy = secondsPassedTotal.value;
+        xSemaphoreGive(secondsPassedTotal.lock);
+    }
+
 
 	if (xSemaphoreTake(buttonPressCountNS.lock, portMAX_DELAY) == pdTRUE) {
-		sprintf(formatedText, "N: %u |  S: %u", buttonPressCountNS.values[0],
-				buttonPressCountNS.values[1]);
+		sprintf(formatedText, "N: %u |  S: %u           Seconds passed: %d", buttonPressCountNS.values[0],
+				buttonPressCountNS.values[1], secondsPassedTotalCopy);
 		xSemaphoreGive(buttonPressCountNS.lock);
 	}
 
@@ -86,7 +93,7 @@ void vBlinkingButtonsDrawTask(void *pvParameters) {
     
     Message_h_t buttonsNSPressMessage = Message__init((coord_t) {SCREEN_CENTER.x, 
             SCREEN_CENTER.y - DISTANCE_VERTICAL_MESSAGE_CENTER}, 
-            "N: 0 |  S: 0", Black);
+            "N: 0 |  S: 0           Seconds passed: 0", Black);
     
     uint32_t notification = 0;
 
@@ -189,4 +196,17 @@ void vButtonPressResetTask(void *pvParameters) {
 	        }
         }
     }
+}
+
+void vCountingSecondsTask(void *pvParameters) {
+     
+     
+     while (1) {
+         if (xSemaphoreTake(secondsPassedTotal.lock, portMAX_DELAY == pdTRUE)) {
+             secondsPassedTotal.value++;
+             xSemaphoreGive(secondsPassedTotal.lock);
+         }
+
+         vTaskDelay(portTICK_PERIOD_MS * 1000);
+     }
 }

@@ -51,6 +51,16 @@ void processButtonPressS() {
 	xSemaphoreGive(ButtonSPressed);
 }
 
+void controlCountingSecondsTask() {
+	static int isSuspended = 0;
+	if (isSuspended) {
+		vTaskResume(CountingSecondsTask);
+	} else {
+		vTaskSuspend(CountingSecondsTask);
+	}
+	isSuspended = !isSuspended;
+}
+
 void resetButtonPressCountIfEntered() {
 	if (tumEventGetMouseLeft() || tumEventGetMouseRight()) {
 		if (xSemaphoreTake(buttonPressCountABCD.lock, portMAX_DELAY) ==
@@ -65,7 +75,7 @@ void resetButtonPressCountIfEntered() {
 
 void vCheckingInputsTask(void *pvParameters) {
 	static TickType_t lastPressTimeA, lastPressTimeB, lastPressTimeC, lastPressTimeD,
-			lastPressTimeE, lastPressTimeN, lastPressTimeS = 0;
+			lastPressTimeE, lastPressTimeN, lastPressTimeS, lastPressTimeP = 0;
 	static TickType_t debounceDelay = portTICK_PERIOD_MS * TIME_DEBOUNCE_BUTTON_MS;
 
 	while(1) {
@@ -98,6 +108,10 @@ void vCheckingInputsTask(void *pvParameters) {
 				processButtonPressN();
 			if (validateButtonPress(KEYCODE(S), &lastPressTimeS, &debounceDelay))
 				processButtonPressS();	
+
+			//Checking wheather CountingSecondsTask has to be paused or not
+			if (validateButtonPress(KEYCODE(P), &lastPressTimeP, &debounceDelay))
+				controlCountingSecondsTask();
 
 			resetButtonPressCountIfEntered();
 
