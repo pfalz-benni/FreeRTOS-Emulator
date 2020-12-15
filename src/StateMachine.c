@@ -19,6 +19,7 @@ void vStateMachineTask(void *pvParameters) {
             if (changeState.value) {
                 //change state: switch current display
                 printf("State Changing\n");
+
                 changeState.value = 0;
 
                 switch (currentState) {
@@ -74,14 +75,20 @@ void vStateMachineTask(void *pvParameters) {
                         xQueueReset(numbersToPrint);
                         if (Exercise4_1Task) {
                             vTaskResume(Exercise4_1Task);
+                            xTaskNotifyGive(Exercise4_1Task);
                         }
                         if (Exercise4_2Task) {
                             vTaskResume(Exercise4_2Task);
+                            xTaskNotifyGive(Exercise4_2Task);
+                        }
+                        if (Exercise4_3Task) {
+                            vTaskResume(Exercise4_3Task);
+                            xTaskNotifyGive(Exercise4_3Task);
                         }
                         if (Exercise4_4Task) {
                             vTaskResume(Exercise4_4Task);
+                            xTaskNotifyGive(Exercise4_4Task);
                         }
-                        //TODO
                         if (PrintTaskOutputsTask) {
                             vTaskResume(PrintTaskOutputsTask);
                             xTaskNotifyGive(PrintTaskOutputsTask);
@@ -96,10 +103,12 @@ void vStateMachineTask(void *pvParameters) {
                         if (Exercise4_2Task) {
                             vTaskSuspend(Exercise4_2Task);
                         }
+                        if (Exercise4_3Task) {
+                            vTaskSuspend(Exercise4_2Task);
+                        }                        
                         if (Exercise4_4Task) {
                             vTaskSuspend(Exercise4_4Task);
                         }
-                        //TODO
                         if (PrintTaskOutputsTask) {
                             vTaskSuspend(PrintTaskOutputsTask);
                         }
@@ -116,6 +125,7 @@ void vStateMachineTask(void *pvParameters) {
                         break;
                     //TODO Make sure to give back all mutexes in order not to create deadlocks!!!
                 }
+                // tumFUtilPrintTaskStateList();
             }
             xSemaphoreGive(changeState.lock);
 

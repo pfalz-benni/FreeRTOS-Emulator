@@ -62,6 +62,7 @@ TaskHandle_t Exercise4_4Task = NULL;
 // source files with differnet compilation units.
 SemaphoreHandle_t ScreenLock = NULL;
 SemaphoreHandle_t ButtonSPressed = NULL;
+SemaphoreHandle_t wakeTask4_3 = NULL;
 buttons_buffer_t buttons = { 0 };
 buttonPresses_t buttonPressCountABCD = { 0 };
 buttonPresses_t buttonPressCountNS = { 0 }; //not the entire value array is used
@@ -153,6 +154,12 @@ int main(int argc, char *argv[])
 		goto err_buttonspressed_semaphore;
 	}
 
+	wakeTask4_3 = xSemaphoreCreateBinary();
+	if (!wakeTask4_3) {
+		PRINT_ERROR("Failed to create wakeTask4_3 semaphore");
+		goto err_wakeTask4_3_semaphore;
+	}
+
 	buttonPressCountNS.lock = xSemaphoreCreateMutex();
 	if (!buttonPressCountNS.lock) {
 		PRINT_ERROR("Failed to create buttonPressCountNS lock");
@@ -166,7 +173,7 @@ int main(int argc, char *argv[])
 	}
 // ---------------QUEUE----------------------------------------------
 
-	numbersToPrint = xQueueCreate(NUMBER_QUEUE_LENGTH, sizeof(char));
+	numbersToPrint = xQueueCreate(NUMBER_QUEUE_LENGTH, sizeof(tuple_t));
 	if (!numbersToPrint) {
 		PRINT_ERROR("Failed to create secondsPassedTotal lock");
 		goto err_numberstoprint_queue;
@@ -365,6 +372,8 @@ err_numberstoprint_queue:
 err_secondspassedtotal_lock:
 	vSemaphoreDelete(buttonPressCountNS.lock);
 err_buttonpresscountns_lock:
+	vSemaphoreDelete(wakeTask4_3);
+err_wakeTask4_3_semaphore:
 	vSemaphoreDelete(ButtonSPressed);
 err_buttonspressed_semaphore:
 	vSemaphoreDelete(movingShapesDisplayTaskResumed.lock);

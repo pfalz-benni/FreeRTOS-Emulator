@@ -1,120 +1,140 @@
 #include "PrintingTasksDisplay.h"
 
 void vPrintTaskOutputsTask(void *pvParameters) {
-    TickType_t xLastWakeTime, prevWakeTime;
+    TickType_t xLastWakeTime;
 
-    // Message_h_t taskOutputMessageLines[15];
-    // Message_h_t *taskOutputMessageLines = calloc(15, sizeof(Message_h_t));
-
-    // for (int i = 0; i < 15; i++) {
-    //     char *lineText = calloc(10, sizeof(char));
-    //     sprintf(lineText, "%d. Task: ", i + 1);
-    //     // printf(lineText);
-    //     // printf("\n");
-    //     taskOutputMessageLines[i] = Message__initTopLeftCorner(
-    //         (coord_t) {COORD_TASK_MESSAGE.x, COORD_TASK_MESSAGE.y + 20 * i},
-    //         lineText, Black);
-    // }
-
-    char tempString[50];
-    char tempChar;
+    char tempString[LENGTH_TEMPORARY_STRING];
     int x = COORD_TASK_MESSAGE.x;
-    int y = COORD_TASK_MESSAGE.y - 20;
-    int counter = 0; //counts number of ticks
+    int y = COORD_TASK_MESSAGE.y - DISTANCE_NEW_LINE;
+    int counter = 1; //counts number of ticks
+
+    tuple_t tempTuple = { 0 };
+    TickType_t prevReceiveTick = 0;
 
     while (1) {
         xLastWakeTime = xTaskGetTickCount();
 
         xSemaphoreTake(ScreenLock, portMAX_DELAY);
+
+        //reset task if it was resumed (TaskNotification from state machine)
         if (ulTaskNotifyTake(pdTRUE, 0)) {
-            counter = 0;
-            y = COORD_TASK_MESSAGE.y - 20;
+            counter = 1;
+            y = COORD_TASK_MESSAGE.y - DISTANCE_NEW_LINE;
             tumDrawClear(White);
         }
         
-        while (xQueueReceive(numbersToPrint, &tempChar, 0) == pdTRUE) {
-            // if (tempChar == '1') {
-            if (xTaskGetTickCount() > xLastWakeTime) {
-                y += 20;
+        while (xQueueReceive(numbersToPrint, &tempTuple, 0) == pdTRUE) {
+
+            //determin which queue elements have been sent within the
+            //same tick
+            if (tempTuple.tick > prevReceiveTick) {
+                y += DISTANCE_NEW_LINE;
                 x = COORD_TASK_MESSAGE.x;
 
                 //lign up the columns of numbers under each other
                 if (counter < 10) {
-                    sprintf(tempString, "%d. Tick:   %c", counter++, tempChar);
+                    sprintf(tempString, "%d. Tick:   %c", counter++, tempTuple.value);
                 } else {
-                    sprintf(tempString, "%d. Tick: %c", counter++, tempChar);
+                    sprintf(tempString, "%d. Tick: %c", counter++, tempTuple.value);
                 }
                 tumDrawText(tempString, x, y, Black);
-                x += 80;
-                break;
+                x += DISTANCE_VERTICAL_LINE_BEGIN;
             } else {
-                sprintf(tempString, "%c", tempChar);
+                sprintf(tempString, "%c", tempTuple.value);
                 tumDrawText(tempString, x, y, Black);
-                x += 20;
+                x += DISTANCE_VERTICAL_CHARACTER;
             }
+
+            prevReceiveTick = tempTuple.tick;
         }
 
         xSemaphoreGive(ScreenLock);
 
-        if (counter > 15) {
+        if (counter > NUMBER_TICKS_LAST_EXECUTION) {
             vTaskSuspend(PrintTaskOutputsTask);
         }
 
-        prevWakeTime = xLastWakeTime;
-
-        // vTaskDelayUntil(&xLastWakeTime, 1);
-        vTaskDelay(1);
+        vTaskDelayUntil(&xLastWakeTime, 1);
     }
 }
 
-//note: these tasks might run a couple times to often compared
-//to what is printed on the screen. However, this is not a 
-//problem because the queue is always reset before running
-//the third state diplay
+void sendToQueueAndSuspendTask(TaskHandle_t Exercise4_xTask, tuple_t *toQueue, TickType_t *xLastWakeTime,
+        TickType_t *initialWakeTime, TickType_t delay) 
+{
+    //reset task if it was resumed (TaskNotification from state machine)
+    if (ulTaskNotifyTake(pdTRUE, 0)) {
+        *initialWakeTime = xTaskGetTickCount();
+    }
+    *xLastWakeTime = xTaskGetTickCount();
 
-void vExercise4_1Task(void *pvParameters) {
-    TickType_t xLastWakeTime;
-    char one = '1';
+    //execution for no longer than 15 ticks
+    if (*xLastWakeTime < *initialWakeTime + NUMBER_TICKS_LAST_EXECUTION) {
+        toQueue->tick = *xLastWakeTime;
+        xQueueSend(numbersToPrint,toQueue , portMAX_DELAY);
 
-    while (1) {
-        xLastWakeTime = xTaskGetTickCount();
-
-        xQueueSend(numbersToPrint,&one , portMAX_DELAY);
+        if (Exercise4_xTask == Exercise4_2Task) {
+            xSemaphoreGive(wakeTask4_3);
+        }
 
         //used instead of vTaskDelay() in order not to risk that
         //the task already executed long because it had to wait
         //for the queue
-        // vTaskDelayUntil(&xLastWakeTime, 1);
-        vTaskDelay(2);
+        vTaskDelayUntil(xLastWakeTime, delay);
+    } else {
+        if (Exercise4_xTask == Exercise4_2Task) {
+            vTaskSuspend(Exercise4_3Task);
+        }
+        vTaskSuspend(Exercise4_xTask);
+    }
+}
+
+void vExercise4_1Task(void *pvParameters) {
+    TickType_t xLastWakeTime, initialWakeTime;
+
+    tuple_t toQueue = { 0 };
+    toQueue.value = '1';
+
+    while (1) {
+        sendToQueueAndSuspendTask(Exercise4_1Task, &toQueue, &xLastWakeTime, 
+                                  &initialWakeTime, 1);
     }
 }
 
 void vExercise4_2Task(void *pvParameters) {
-    TickType_t xLastWakeTime;
-    char two = '2';
+    TickType_t xLastWakeTime, initialWakeTime;
+
+    tuple_t toQueue = { 0 };
+    toQueue.value = '2';
 
     while (1) {
-        xLastWakeTime = xTaskGetTickCount();
-
-        xQueueSend(numbersToPrint,&two , portMAX_DELAY);
-
-        // vTaskDelayUntil(&xLastWakeTime, 2);
-        vTaskDelay(4);
+        sendToQueueAndSuspendTask(Exercise4_2Task, &toQueue, &xLastWakeTime, 
+                                  &initialWakeTime, 2);
     }
 }
 
 void vExercise4_3Task(void *pvParameters){
+    TickType_t xLastWakeTime;
+
+    tuple_t toQueue = { 0 };
+    toQueue.value = '3';
+
+    while (1) {
+        if (xSemaphoreTake(wakeTask4_3, portMAX_DELAY) == pdTRUE) {
+            xLastWakeTime = xTaskGetTickCount();
+            toQueue.tick = xLastWakeTime;
+            xQueueSend(numbersToPrint,&toQueue , portMAX_DELAY);
+        }
+    }
 }
 
 void vExercise4_4Task(void *pvParameters) {
-    TickType_t xLastWakeTime;
-    char four = '4';
+    TickType_t xLastWakeTime, initialWakeTime;
+
+    tuple_t toQueue = { 0 };
+    toQueue.value = '4';
 
     while (1) {
-        xLastWakeTime = xTaskGetTickCount();
-
-        xQueueSend(numbersToPrint,&four , portMAX_DELAY);
-
-        vTaskDelayUntil(&xLastWakeTime, 4);
+        sendToQueueAndSuspendTask(Exercise4_4Task, &toQueue, &xLastWakeTime, 
+                                  &initialWakeTime, 4);
     }
 }

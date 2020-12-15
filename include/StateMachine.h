@@ -13,8 +13,10 @@
 #include "task.h"
 #include "semphr.h"
 
-#include "SharedResources.h"
 #include "TUM_Draw.h"
+#include "TUM_FreeRTOS_Utils.h"
+
+#include "SharedResources.h"
 
 
 void clearScreen();

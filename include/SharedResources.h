@@ -61,7 +61,10 @@ typedef struct sharedIntegerVariable {
 } sharedIntegerVariable_t;
 
 
-
+typedef struct tuple {
+	char value;
+	TickType_t tick;
+} tuple_t;
 
 
 // All the globally used variables declared in main.c
@@ -84,6 +87,7 @@ extern TaskHandle_t Exercise4_4Task;
 
 extern SemaphoreHandle_t ScreenLock;
 extern SemaphoreHandle_t ButtonSPressed;
+extern SemaphoreHandle_t wakeTask4_3;
 extern buttons_buffer_t buttons;
 extern buttonPresses_t buttonPressCountABCD;
 extern sharedIntegerVariable_t changeState;
