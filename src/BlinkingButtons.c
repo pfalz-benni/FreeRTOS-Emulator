@@ -59,6 +59,22 @@ void vDrawFPS(void) {
     tumFontPutFontHandle(cur_font);
 }
 
+void drawButtonsNSPressMessage(Message_h_t buttonsNSPressMessage, buttonPresses_t buttonPressCountNS) {
+	char formatedText[LENGTH_STRING_NS_DRAWN];
+
+	if (xSemaphoreTake(buttonPressCountNS.lock, portMAX_DELAY) == pdTRUE) {
+		sprintf(formatedText, "N: %u |  S: %u", buttonPressCountNS.values[0],
+				buttonPressCountNS.values[1]);
+		xSemaphoreGive(buttonPressCountNS.lock);
+	}
+
+	Message__setText(buttonsNSPressMessage, formatedText);
+
+	tumDrawText(Message__getText(buttonsNSPressMessage), Message__getTopLeftCorner(buttonsNSPressMessage).x,
+				Message__getTopLeftCorner(buttonsNSPressMessage).y,
+				PositionProperties__getColor(Message__getPositionProperties(buttonsNSPressMessage)));
+}
+
 void vBlinkingButtonsDrawTask(void *pvParameters) {
     Circle_h_t circleDynamic = Circle__init((coord_t)
             {SCREEN_CENTER.x - DISTANCE_CIRCLE_CENTER, SCREEN_CENTER.y},
@@ -67,6 +83,10 @@ void vBlinkingButtonsDrawTask(void *pvParameters) {
     Circle_h_t circleStatic = Circle__init((coord_t)
             {SCREEN_CENTER.x + DISTANCE_CIRCLE_CENTER, SCREEN_CENTER.y},
             RADIUS_CIRCLES, Blue);
+    
+    Message_h_t buttonsNSPressMessage = Message__init((coord_t) {SCREEN_CENTER.x, 
+            SCREEN_CENTER.y - DISTANCE_VERTICAL_MESSAGE_CENTER}, 
+            "N: 0 |  S: 0", Black);
     
     uint32_t notification = 0;
 
@@ -93,6 +113,10 @@ void vBlinkingButtonsDrawTask(void *pvParameters) {
         }
 
         vDrawFPS();
+
+        //draw button press counter
+        drawButtonsNSPressMessage(buttonsNSPressMessage, buttonPressCountNS);
+
 
         xSemaphoreGive(ScreenLock);
 
@@ -127,5 +151,36 @@ void vBlinkingButtonsStaticTask(void *pvParameters) {
 
         // information is sent to the drawing task every tick
         vTaskDelay(1);
+    }
+}
+
+void vButtonPressSemaphoreTask(void *pvParameters) {
+
+    while (1) {
+        if (xSemaphoreTake(ButtonSPressed, portMAX_DELAY) == pdTRUE) {
+            if (xSemaphoreTake(buttonPressCountNS.lock, portMAX_DELAY) == pdTRUE) {
+                buttonPressCountNS.values[1]++;
+                xSemaphoreGive(buttonPressCountNS.lock);
+	        }
+        }
+    }
+}
+
+void vButtonPressNotificationTask(void *pvParameters) {
+
+    while (1) {
+        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
+            if (xSemaphoreTake(buttonPressCountNS.lock, portMAX_DELAY) == pdTRUE) {
+                buttonPressCountNS.values[0]++;
+                xSemaphoreGive(buttonPressCountNS.lock);
+	        }
+        }
+    }
+}
+
+void vButtonPressResetTask(void *pvParameters) {
+
+    while (1) {
+
     }
 }

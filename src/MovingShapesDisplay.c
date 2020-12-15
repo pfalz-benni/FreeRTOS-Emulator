@@ -76,13 +76,13 @@ void drawSimpleTextMessages(Message_h_t topMessage, Message_h_t bottomMessage) {
 				PositionProperties__getColor(Message__getPositionProperties(topMessage)));
 }
 
-void drawButtonPressMessage(Message_h_t buttonPressMessage, buttonPresses_t buttonPressCount) {
+void drawButtonPressMessage(Message_h_t buttonPressMessage, buttonPresses_t buttonPressCountABCD) {
 	char formatedText[LENGTH_STRINGS_DRAWN];
 
-	if (xSemaphoreTake(buttonPressCount.lock, portMAX_DELAY) == pdTRUE) {
-		sprintf(formatedText, "A: %u |  B: %u |  C: %u |  D: %u", buttonPressCount.valuesABCD[0],
-				buttonPressCount.valuesABCD[1],buttonPressCount.valuesABCD[2],buttonPressCount.valuesABCD[3]);
-		xSemaphoreGive(buttonPressCount.lock);
+	if (xSemaphoreTake(buttonPressCountABCD.lock, portMAX_DELAY) == pdTRUE) {
+		sprintf(formatedText, "A: %u |  B: %u |  C: %u |  D: %u", buttonPressCountABCD.values[0],
+				buttonPressCountABCD.values[1],buttonPressCountABCD.values[2],buttonPressCountABCD.values[3]);
+		xSemaphoreGive(buttonPressCountABCD.lock);
 	}
 
 	Message__setText(buttonPressMessage, formatedText);
@@ -204,7 +204,7 @@ void vMovingShapesDisplayTask(void *pvParameters) {
 		//Draw all objects in appropriate position
 		drawShapes(circle, rectangle, triangle);
 		drawSimpleTextMessages(topMessage, bottomMessage);
-		drawButtonPressMessage(buttonPressMessage, buttonPressCount);
+		drawButtonPressMessage(buttonPressMessage, buttonPressCountABCD);
 		drawMouseCoordMessage(mouseCoordMessage);
 
 		xSemaphoreGive(ScreenLock);

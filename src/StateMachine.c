@@ -28,7 +28,7 @@ void vStateMachineTask(void *pvParameters) {
                         if (MovingShapesDisplayTask) {
                             vTaskSuspend(MovingShapesDisplayTask);
                         }
-                        //resume 3.2 tasks
+                        //resume 3.x tasks
                         if (BlinkingButtonsDrawTask) {
                             vTaskResume(BlinkingButtonsDrawTask);
                         }
@@ -38,10 +38,19 @@ void vStateMachineTask(void *pvParameters) {
                         if (BlinkingButtonsStaticTask) {
                             vTaskResume(BlinkingButtonsStaticTask);
                         }
+                        if (ButtonPressNotificationTask) {
+                            vTaskResume(ButtonPressNotificationTask);
+                        }
+                        if (ButtonPressSemaphoreTask) {
+                            vTaskResume(ButtonPressSemaphoreTask);
+                        }
+                        // if (ButtonPressResetTask) {
+                        //     vTaskResume(ButtonPressResetTask);
+                        // }
                         break;
                     case stateTwo:
                         currentState = stateThree;
-                        //suspend 3.2 tasks
+                        //suspend 3.x tasks
                         if (BlinkingButtonsDrawTask) {
                             vTaskSuspend(BlinkingButtonsDrawTask);
                         }
@@ -51,6 +60,15 @@ void vStateMachineTask(void *pvParameters) {
                         if (BlinkingButtonsStaticTask) {
                             vTaskSuspend(BlinkingButtonsStaticTask);
                         }
+                        if (ButtonPressNotificationTask) {
+                            vTaskSuspend(ButtonPressNotificationTask);
+                        }
+                        if (ButtonPressSemaphoreTask) {
+                            vTaskSuspend(ButtonPressSemaphoreTask);
+                        }
+                        // if (ButtonPressResetTask) {
+                        //     vTaskSuspend(ButtonPressResetTask);
+                        // }
                         //resume 4.x tasks
                         break;
                     case stateThree:

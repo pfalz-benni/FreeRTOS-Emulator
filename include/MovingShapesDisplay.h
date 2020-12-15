@@ -43,7 +43,7 @@ void drawShapes(Circle_h_t circle, Rectangle_h_t rectangle, Triangle_h_t triangl
 
 void drawSimpleTextMessages(Message_h_t topMessage, Message_h_t bottomMessage);
 
-void drawButtonPressMessage(Message_h_t buttonPressMessage, buttonPresses_t buttonPressCount);
+void drawButtonPressMessage(Message_h_t buttonPressMessage, buttonPresses_t buttonPressCountABCD);
 
 void drawMouseCoordMessage(Message_h_t mouseCoordMessage);
 

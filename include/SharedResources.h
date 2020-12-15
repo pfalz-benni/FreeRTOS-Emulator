@@ -37,7 +37,7 @@ typedef struct buttons_buffer {
  * In this case only the buttons A, B, C and D are tracked.
  */
 typedef struct buttonPresses {
-	unsigned int valuesABCD[NUMBER_OF_TRACKED_KEYS];
+	unsigned int values[NUMBER_OF_TRACKED_KEYS];
 	SemaphoreHandle_t lock;
 } buttonPresses_t;
 
@@ -64,11 +64,16 @@ extern TaskHandle_t SwapBufferTask;
 extern TaskHandle_t BlinkingButtonsDrawTask;
 extern TaskHandle_t BlinkingButtonsDynamicTask;
 extern TaskHandle_t BlinkingButtonsStaticTask;
+extern TaskHandle_t ButtonPressSemaphoreTask;
+extern TaskHandle_t ButtonPressNotificationTask;
+extern TaskHandle_t ButtonPressResetTask;
 
 extern SemaphoreHandle_t ScreenLock;
+extern SemaphoreHandle_t ButtonSPressed;
 extern buttons_buffer_t buttons;
-extern buttonPresses_t buttonPressCount;
+extern buttonPresses_t buttonPressCountABCD;
 extern genericBinaryState_t changeState;
 extern genericBinaryState_t movingShapesDisplayTaskResumed;
+extern buttonPresses_t buttonPressCountNS;
 
 #endif

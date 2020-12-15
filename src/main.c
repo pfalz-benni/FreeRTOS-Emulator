@@ -44,14 +44,19 @@ TaskHandle_t SwapBufferTask = NULL;
 TaskHandle_t BlinkingButtonsDrawTask = NULL; //exercise 3.2.2
 TaskHandle_t BlinkingButtonsDynamicTask = NULL; //exercise 3.2.2
 TaskHandle_t BlinkingButtonsStaticTask = NULL; //exercise 3.2.2
+TaskHandle_t ButtonPressSemaphoreTask = NULL; //exercise 3.2.3
+TaskHandle_t ButtonPressNotificationTask = NULL; //exercise 3.2.3
+TaskHandle_t ButtonPressResetTask = NULL; //exercise 3.2.3
 
 
 // Variables that are declares as extern because they guard resources
 // and must therefore be used in different tasks in different
 // source files with differnet compilation units.
 SemaphoreHandle_t ScreenLock = NULL;
+SemaphoreHandle_t ButtonSPressed = NULL;
 buttons_buffer_t buttons = { 0 };
-buttonPresses_t buttonPressCount = { 0 };
+buttonPresses_t buttonPressCountABCD = { 0 };
+buttonPresses_t buttonPressCountNS = { 0 }; //not the entire value array is used
 /**
  * Infomation wheather the state machien has changed state or not
  */
@@ -122,6 +127,7 @@ int main(int argc, char *argv[])
 		goto err_init_audio;
 	}
 
+// ---------------SEMAPHORES-----------------------------------------
 	buttons.lock = xSemaphoreCreateMutex(); // Locking mechanism
 	if (!buttons.lock) {
 		PRINT_ERROR("Failed to create buttons lock");
@@ -134,10 +140,10 @@ int main(int argc, char *argv[])
 		goto err_screen_lock;
 	}
 
-	buttonPressCount.lock = xSemaphoreCreateMutex();
-	if (!buttonPressCount.lock) {
-		PRINT_ERROR("Failed to create buttonPressCount lock");
-		goto err_buttonpresscount_lock;
+	buttonPressCountABCD.lock = xSemaphoreCreateMutex();
+	if (!buttonPressCountABCD.lock) {
+		PRINT_ERROR("Failed to create buttonPressCountABCD lock");
+		goto err_buttonpresscountabcd_lock;
 	}
 
     changeState.lock = xSemaphoreCreateMutex();
@@ -151,6 +157,20 @@ int main(int argc, char *argv[])
 		PRINT_ERROR("Failed to create movingShapesDisplayTaskResumed lock");
 		goto err_movingShapesDisplayTaskResumed_lock;
 	}
+
+	ButtonSPressed = xSemaphoreCreateBinary();
+	if (!ButtonSPressed) {
+		PRINT_ERROR("Failed to create ButtonSPressed semaphore");
+		goto err_buttonspressed_semaphore;
+	}
+
+	buttonPressCountNS.lock = xSemaphoreCreateMutex();
+	if (!buttonPressCountNS.lock) {
+		PRINT_ERROR("Failed to create buttonPressCountNS lock");
+		goto err_buttonpresscountns_lock;
+	}
+
+// ---------------TASKS----------------------------------------------
 
     if (xTaskCreate(vSwapBufferTask, "SwapBufferTask",
 			mainGENERIC_STACK_SIZE * 2, NULL, configMAX_PRIORITIES,
@@ -203,12 +223,36 @@ int main(int argc, char *argv[])
 		goto err_blinkingbuttonsstatic_task;
 	}
 
+	if (xTaskCreate(vButtonPressSemaphoreTask, "ButtonPressSemaphoreTask",
+			mainGENERIC_STACK_SIZE, NULL, mainGENERIC_PRIORITY,
+			&ButtonPressSemaphoreTask) != pdPASS) {
+		PRINT_ERROR("Failed to create 'ButtonPressSemaphoreTask'");
+		goto err_buttonpresssemaphore_task;
+	}
+
+	if (xTaskCreate(vButtonPressNotificationTask, "ButtonPressNotificationTask",
+			mainGENERIC_STACK_SIZE, NULL, mainGENERIC_PRIORITY + 2,
+			&ButtonPressNotificationTask) != pdPASS) {
+		PRINT_ERROR("Failed to create 'ButtonPressNotificationTask'");
+		goto err_buttonpressnotification_task;
+	}
+
+	if (xTaskCreate(vButtonPressResetTask, "ButtonPressResetTask",
+			mainGENERIC_STACK_SIZE, NULL, mainGENERIC_PRIORITY,
+			&ButtonPressResetTask) != pdPASS) {
+		PRINT_ERROR("Failed to create 'ButtonPressResetTask'");
+		goto err_buttonpressreset_task;
+	}
+
     //Suspending diffent tasks because they are managed 
     //from inside the state machine task
     vTaskSuspend(MovingShapesDisplayTask);
 	vTaskSuspend(BlinkingButtonsDrawTask);
 	vTaskSuspend(BlinkingButtonsDynamicTask);
 	vTaskSuspend(BlinkingButtonsStaticTask);
+	vTaskSuspend(ButtonPressSemaphoreTask);
+	vTaskSuspend(ButtonPressNotificationTask);
+	vTaskSuspend(ButtonPressResetTask);
 
 
 	printf("Numer of tasks: %lu\n\n", uxTaskGetNumberOfTasks());
@@ -220,6 +264,12 @@ int main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 
 
+err_buttonpressreset_task:
+	vTaskDelete(ButtonPressNotificationTask);
+err_buttonpressnotification_task:
+	vTaskDelete(ButtonPressSemaphoreTask);
+err_buttonpresssemaphore_task:
+	vTaskDelete(BlinkingButtonsStaticTask);
 err_blinkingbuttonsstatic_task:
 	vTaskDelete(BlinkingButtonsDynamicTask);
 err_blinkingbuttonsdynamic_task:
@@ -233,12 +283,16 @@ err_movingshapesdisplay_task:
 err_statemachine_task:
     vTaskDelete(SwapBufferTask);
 err_swapbuffer_task:
+	vSemaphoreDelete(buttonPressCountNS.lock);
+err_buttonpresscountns_lock:
+	vSemaphoreDelete(ButtonSPressed);
+err_buttonspressed_semaphore:
 	vSemaphoreDelete(movingShapesDisplayTaskResumed.lock);
 err_movingShapesDisplayTaskResumed_lock:
     vSemaphoreDelete(changeState.lock);
 err_changestate_lock:
-	vSemaphoreDelete(buttonPressCount.lock);
-err_buttonpresscount_lock:
+	vSemaphoreDelete(buttonPressCountABCD.lock);
+err_buttonpresscountabcd_lock:
 	vSemaphoreDelete(ScreenLock);
 err_screen_lock: // Everything created before has to be deleted. The item calling the error
 	vSemaphoreDelete(buttons.lock); // routin doesn't because it was not actually created.

@@ -14,19 +14,15 @@ void processStateChangeInput() {
 	}
 }
 
-void checkAndProcessButtonPress(unsigned char keycode, TickType_t *lastPressTime, TickType_t *debounceDelay) {
+int validateButtonPress(unsigned char keycode, TickType_t *lastPressTime, TickType_t *debounceDelay) {
 	if (buttons.buttons[keycode]) {
 		// if enough time since last counted button press has passed,
-		// the current button press is counted
+		// the current button press is counted as vaild
 		if (xTaskGetTickCount() - *lastPressTime > *debounceDelay) {
-			//button press E is treaded differently than the rest
-			if (keycode == KEYCODE(E)) {
-				processStateChangeInput();
-			} else if (xSemaphoreTake(buttonPressCount.lock, portMAX_DELAY) == pdTRUE) {
-				buttonPressCount.valuesABCD [keycode - OFFSET_KEYCODE_BUTTONPRESSCOUNT]++;
-				xSemaphoreGive(buttonPressCount.lock);
-			}
 			*lastPressTime = xTaskGetTickCount();
+			return 1;
+		} else {
+			return 0;
 		}
 	}
 	// if button of interest is released, lastPressTime is reset. This ensures that the
@@ -34,23 +30,42 @@ void checkAndProcessButtonPress(unsigned char keycode, TickType_t *lastPressTime
 	// passed since the preceding button press 
 	else {
 		*lastPressTime = 0;
+		return 0;
 	}
+}
+
+void processButtonPressABCD(unsigned char keycode) {
+	if (xSemaphoreTake(buttonPressCountABCD.lock, portMAX_DELAY) == pdTRUE) {
+				buttonPressCountABCD.values [keycode - OFFSET_KEYCODE_BUTTONPRESSCOUNT]++;
+				xSemaphoreGive(buttonPressCountABCD.lock);
+	}
+}
+
+//start "task notification task" by sending task notification
+void processButtonPressN() {
+	xTaskNotifyGive(ButtonPressNotificationTask);
+}
+
+//start "binary semaphore task" by triggering binary semaphore
+void processButtonPressS() {
+	xSemaphoreGive(ButtonSPressed);
 }
 
 void resetButtonPressCountIfEntered() {
 	if (tumEventGetMouseLeft() || tumEventGetMouseRight()) {
-		if (xSemaphoreTake(buttonPressCount.lock, portMAX_DELAY) ==
+		if (xSemaphoreTake(buttonPressCountABCD.lock, portMAX_DELAY) ==
 		    pdTRUE) {
 			for (int i = 0; i < NUMBER_OF_TRACKED_KEYS; i++) {
-				buttonPressCount.valuesABCD[i] = 0;
+				buttonPressCountABCD.values[i] = 0;
 			}
-			xSemaphoreGive(buttonPressCount.lock);
+			xSemaphoreGive(buttonPressCountABCD.lock);
 		}
 	}
 }
 
 void vCheckingInputsTask(void *pvParameters) {
-	static TickType_t lastPressTimeA, lastPressTimeB, lastPressTimeC, lastPressTimeD, lastPressTimeE = 0;
+	static TickType_t lastPressTimeA, lastPressTimeB, lastPressTimeC, lastPressTimeD,
+			lastPressTimeE, lastPressTimeN, lastPressTimeS = 0;
 	static TickType_t debounceDelay = portTICK_PERIOD_MS * TIME_DEBOUNCE_BUTTON_MS;
 
 	while(1) {
@@ -65,13 +80,24 @@ void vCheckingInputsTask(void *pvParameters) {
 				exit(EXIT_SUCCESS);
 			}
 
-			checkAndProcessButtonPress(KEYCODE(A), &lastPressTimeA, &debounceDelay);
-			checkAndProcessButtonPress(KEYCODE(B), &lastPressTimeB, &debounceDelay);
-			checkAndProcessButtonPress(KEYCODE(C), &lastPressTimeC, &debounceDelay);
-			checkAndProcessButtonPress(KEYCODE(D), &lastPressTimeD, &debounceDelay);
+			if (validateButtonPress(KEYCODE(A), &lastPressTimeA, &debounceDelay))
+				processButtonPressABCD(KEYCODE(A));
+			if (validateButtonPress(KEYCODE(B), &lastPressTimeB, &debounceDelay))
+				processButtonPressABCD(KEYCODE(B));
+			if (validateButtonPress(KEYCODE(C), &lastPressTimeC, &debounceDelay))
+				processButtonPressABCD(KEYCODE(C));
+			if (validateButtonPress(KEYCODE(D), &lastPressTimeD, &debounceDelay))
+				processButtonPressABCD(KEYCODE(D));
 
 			//Check for and process state change input
-			checkAndProcessButtonPress(KEYCODE(E), &lastPressTimeE, &debounceDelay);
+			if (validateButtonPress(KEYCODE(E), &lastPressTimeE, &debounceDelay))
+				processStateChangeInput();
+
+			//Check for and process input to start a certain task (3.2.3)
+			if (validateButtonPress(KEYCODE(N), &lastPressTimeN, &debounceDelay))
+				processButtonPressN();
+			if (validateButtonPress(KEYCODE(S), &lastPressTimeS, &debounceDelay))
+				processButtonPressS();	
 
 			resetButtonPressCountIfEntered();
 

@@ -28,8 +28,10 @@
 void xGetButtonInput(void);
 
 void processStateChangeInput();
-
-void checkAndProcessButtonPress(unsigned char keycode, TickType_t *lastPressTime, TickType_t *debounceDelay);
+int validateButtonPress(unsigned char keycode, TickType_t *lastPressTime, TickType_t *debounceDelay);
+void processButtonPressABCD(unsigned char keycode);
+void processButtonPressN();
+void processButtonPressS();
 
 void resetButtonPressCountIfEntered();
 

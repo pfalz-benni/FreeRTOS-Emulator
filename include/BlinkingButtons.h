@@ -26,6 +26,8 @@
 #define TIME_PERIOD_DYNAMIC_MS 1000
 #define TIME_PERIOD_STATIC_MS 500
 #define TIME_BLINKINGBUTTONSDRAWTASK_DELAY_MS 16
+#define DISTANCE_VERTICAL_MESSAGE_CENTER 80
+#define LENGTH_STRING_NS_DRAWN 20
 
 void vDrawFPS(void);
 
@@ -33,6 +35,9 @@ void vBlinkingButtonsDrawTask(void *pvParameters);
 void vBlinkingButtonsDynamicTask(void *pvParameters);
 void vBlinkingButtonsStaticTask(void *pvParameters);
 
+void vButtonPressSemaphoreTask(void *pvParameters);
+void vButtonPressNotificationTask(void *pvParameters);
+void vButtonPressResetTask(void *pvParameters);
 
 
 
