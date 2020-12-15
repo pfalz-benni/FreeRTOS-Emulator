@@ -35,21 +35,28 @@
 
 #define TIME_MOVINGSHAPESDISPLAYTASK_DELAY_MS 20
 
+void updateShapeAndMessagePositions(Circle_h_t circle, Rectangle_h_t rectangle,
+				    Message_h_t topMessage,
+				    TickType_t xLastWakeTime,
+				    TickType_t prevWakeTime,
+				    TickType_t initialWakeTime);
 
-void updateShapeAndMessagePositions(Circle_h_t circle, Rectangle_h_t rectangle, Message_h_t topMessage,
-									TickType_t xLastWakeTime, TickType_t prevWakeTime, TickType_t initialWakeTime);
-
-void drawShapes(Circle_h_t circle, Rectangle_h_t rectangle, Triangle_h_t triangle);
+void drawShapes(Circle_h_t circle, Rectangle_h_t rectangle,
+		Triangle_h_t triangle);
 
 void drawSimpleTextMessages(Message_h_t topMessage, Message_h_t bottomMessage);
 
-void drawButtonPressMessage(Message_h_t buttonPressMessage, buttonPresses_t buttonPressCountABCD);
+void drawButtonPressMessage(Message_h_t buttonPressMessage,
+			    buttonPresses_t buttonPressCountABCD);
 
 void drawMouseCoordMessage(Message_h_t mouseCoordMessage);
 
 void moveScreenInCursorDirection(coord_t *mobileScreenCenter, Circle_h_t circle,
-		Rectangle_h_t rectangle, Triangle_h_t triangle, Message_h_t bottomMessage,
-		Message_h_t topMessage, Message_h_t buttonPressMessage, Message_h_t mouseCoordMessage);
+				 Rectangle_h_t rectangle, Triangle_h_t triangle,
+				 Message_h_t bottomMessage,
+				 Message_h_t topMessage,
+				 Message_h_t buttonPressMessage,
+				 Message_h_t mouseCoordMessage);
 
 void vMovingShapesDisplayTask(void *pvParameters);
 

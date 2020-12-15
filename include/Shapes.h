@@ -24,7 +24,8 @@ PIXELS Circle__getRadius(Circle_h_t handle);
 
 typedef void *Rectangle_h_t;
 
-Rectangle_h_t Rectangle__init(coord_t center, PIXELS width, PIXELS height, unsigned int color);
+Rectangle_h_t Rectangle__init(coord_t center, PIXELS width, PIXELS height,
+			      unsigned int color);
 int Rectangle__destruct(Rectangle_h_t *handle);
 
 int Rectangle__updateCorner(Rectangle_h_t handle);
@@ -43,8 +44,7 @@ int Triangle__destruct(Triangle_h_t *handle);
 int Triangle__updateCorners(Triangle_h_t handle);
 
 PositionProperties_h_t Triangle__getPositionProperties(Triangle_h_t handle);
-coord_t* Triangle__getCorners(Triangle_h_t handle);
-
+coord_t *Triangle__getCorners(Triangle_h_t handle);
 
 // -------------------------------------
 
@@ -54,19 +54,19 @@ Message_h_t Message__init(coord_t center, char *text, unsigned int color);
 int Message__destruct(Message_h_t *handle);
 
 /**
- * Initializes Object at a given top left coordinate instead of at a given center coordinate
+ * Initializes Object at a given top left coordinate instead of at a
+ * given center coordinate
  */
-Message_h_t Message__initTopLeftCorner(coord_t topLeftCorner, char *text, unsigned int color);
+Message_h_t Message__initTopLeftCorner(coord_t topLeftCorner, char *text,
+				       unsigned int color);
 
 int Message__updateCorner(Message_h_t handle);
 
 int Message__setText(Message_h_t handle, char *text);
 
 PositionProperties_h_t Message__getPositionProperties(Message_h_t handle);
-char* Message__getText(Message_h_t handle);
+char *Message__getText(Message_h_t handle);
 coord_t Message__getTopLeftCorner(Message_h_t handle);
 int Message__getTextHeight(Message_h_t handle);
-
-
 
 #endif

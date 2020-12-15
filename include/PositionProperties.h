@@ -36,31 +36,29 @@
 
 typedef void *PositionProperties_h_t;
 
-PositionProperties_h_t PositionProperties__init(PIXELS x, PIXELS y, unsigned int color);
+PositionProperties_h_t PositionProperties__init(PIXELS x, PIXELS y,
+						unsigned int color);
 int PositionProperties__destruct(PositionProperties_h_t *handle);
 
 int PositionProperties__resetPositionAndSpeed(PositionProperties_h_t handle);
-
-int PositionProperties__setPosition(PositionProperties_h_t handle, float f_x, float f_y);
-
-int PositionProperties__updatePosition(PositionProperties_h_t handle, unsigned int timePassed_ms);
-
-int PositionProperties__setSpeedMoveOnCircle(PositionProperties_h_t handle, PIXELS radius, double phase,
-                                     unsigned int timePeriod_ms, unsigned int timePassedinTotal_ms);
-
-int PositionProperties__moveVetically(PositionProperties_h_t handle, float dx, PIXELS distanceToBorder);
-
-int PositionProperties__adjustPositionToNewScreenCenter(PositionProperties_h_t handle,
-		coord_t oldScreenCenter, coord_t newScreenCenter);
+int PositionProperties__setPosition(PositionProperties_h_t handle, float f_x,
+				    float f_y);
+int PositionProperties__updatePosition(PositionProperties_h_t handle,
+				       unsigned int timePassed_ms);
+int PositionProperties__setSpeedMoveOnCircle(PositionProperties_h_t handle,
+					     PIXELS radius, double phase,
+					     unsigned int timePeriod_ms,
+					     unsigned int timePassedinTotal_ms);
+int PositionProperties__moveVetically(PositionProperties_h_t handle, float dx,
+				      PIXELS distanceToBorder);
+int PositionProperties__adjustPositionToNewScreenCenter(
+	PositionProperties_h_t handle, coord_t oldScreenCenter,
+	coord_t newScreenCenter);
 
 PIXELS PositionProperties__getX(PositionProperties_h_t handle);
 PIXELS PositionProperties__getY(PositionProperties_h_t handle);
 unsigned int PositionProperties__getColor(PositionProperties_h_t handle);
 
-
-
 void PositionProperties__printPositionAndSpeed(PositionProperties_h_t handle);
-
-
 
 #endif

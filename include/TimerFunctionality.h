@@ -18,6 +18,4 @@
 
 void deleteButtonCountNSCallback(TimerHandle_t deleteButtonCountNS);
 
-
-
 #endif

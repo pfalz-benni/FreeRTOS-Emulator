@@ -29,7 +29,8 @@
 #define LENGTH_STRING_NS_DRAWN 50
 
 void vDrawFPS(void);
-void drawButtonsNSPressMessage(Message_h_t buttonsNSPressMessage, buttonPresses_t buttonPressCountNS);
+void drawButtonsNSPressMessage(Message_h_t buttonsNSPressMessage,
+			       buttonPresses_t buttonPressCountNS);
 
 void vBlinkingButtonsDrawTask(void *pvParameters);
 void vBlinkingButtonsDynamicTask(void *pvParameters);
@@ -40,7 +41,5 @@ void vButtonPressNotificationTask(void *pvParameters);
 void vButtonPressResetTask(void *pvParameters);
 
 void vCountingSecondsTask(void *pvParameters);
-
-
 
 #endif

@@ -28,8 +28,9 @@
 
 void vPrintTaskOutputsTask(void *pvParameters);
 
-void sendToQueueAndSuspendTask(TaskHandle_t Exercise4_xTask, tuple_t *toQueue, TickType_t *xLastWakeTime,
-        TickType_t *initialWakeTime, TickType_t delay);
+void sendToQueueAndSuspendTask(TaskHandle_t Exercise4_xTask, tuple_t *toQueue,
+			       TickType_t *xLastWakeTime,
+			       TickType_t *initialWakeTime, TickType_t delay);
 
 void vExercise4_1Task(void *pvParameters);
 void vExercise4_2Task(void *pvParameters);

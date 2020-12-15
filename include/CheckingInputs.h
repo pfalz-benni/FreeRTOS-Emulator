@@ -9,7 +9,6 @@
 #ifndef __CHECKING_INPUTS_H__
 #define __CHECKING_INPUTS_H__
 
-
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
@@ -24,11 +23,11 @@
 
 #define TIME_CHECKINGINPUTSTASK_DELAY_MS 40
 
-
 void xGetButtonInput(void);
 
 void processStateChangeInput();
-int validateButtonPress(unsigned char keycode, TickType_t *lastPressTime, TickType_t *debounceDelay);
+int validateButtonPress(unsigned char keycode, TickType_t *lastPressTime,
+			TickType_t *debounceDelay);
 void processButtonPressABCD(unsigned char keycode);
 void processButtonPressN();
 void processButtonPressS();
@@ -37,6 +36,5 @@ void controlCountingSecondsTask();
 void resetButtonPressCountIfEntered();
 
 void vCheckingInputsTask(void *pvParameters);
-
 
 #endif

@@ -18,13 +18,12 @@
 
 #include "SharedResources.h"
 
+#define TIME_STATEMACHINETASK_DELAY 100
 
-void clearScreen();
+void manageTasksState1To2();
+void manageTasksState2To3();
+void manageTasksState3To1();
+
 void vStateMachineTask(void *pvParameters);
-
-
-
-
-
 
 #endif

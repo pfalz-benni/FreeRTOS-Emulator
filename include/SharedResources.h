@@ -15,12 +15,10 @@
 #include "semphr.h"
 #include "timers.h"
 
-
 #define KEYCODE(CHAR) SDL_SCANCODE_##CHAR
 #define NUMBER_OF_TRACKED_KEYS 4
 
 #define NUMBER_QUEUE_LENGTH 200
-
 
 /**
  * @brief Contains information, whether a button on the keyboard is pressed or not.
@@ -56,16 +54,14 @@ typedef struct buttonPresses {
  * been resumed (after it has been suspended) or not
  */
 typedef struct sharedIntegerVariable {
-    int value;
-    SemaphoreHandle_t lock;
+	int value;
+	SemaphoreHandle_t lock;
 } sharedIntegerVariable_t;
-
 
 typedef struct tuple {
 	char value;
 	TickType_t tick;
 } tuple_t;
-
 
 // All the globally used variables declared in main.c
 extern TaskHandle_t MovingShapesDisplayTask;

@@ -20,8 +20,7 @@
 
 #include "SharedResources.h"
 
-#define TIME_FRAMERATE_PERIOD_MS (TickType_t) 20
-
+#define TIME_FRAMERATE_PERIOD_MS (TickType_t)20
 
 void vSwapBufferTask(void *pvParameters);
 
