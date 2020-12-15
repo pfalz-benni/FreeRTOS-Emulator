@@ -13,6 +13,7 @@
 
 #include "FreeRTOS.h"
 #include "semphr.h"
+#include "timers.h"
 
 
 #define KEYCODE(CHAR) SDL_SCANCODE_##CHAR
@@ -75,5 +76,6 @@ extern buttonPresses_t buttonPressCountABCD;
 extern genericBinaryState_t changeState;
 extern genericBinaryState_t movingShapesDisplayTaskResumed;
 extern buttonPresses_t buttonPressCountNS;
+extern TimerHandle_t deleteButtonCountNS;
 
 #endif

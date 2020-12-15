@@ -44,9 +44,9 @@ void vStateMachineTask(void *pvParameters) {
                         if (ButtonPressSemaphoreTask) {
                             vTaskResume(ButtonPressSemaphoreTask);
                         }
-                        // if (ButtonPressResetTask) {
-                        //     vTaskResume(ButtonPressResetTask);
-                        // }
+                        if (ButtonPressResetTask) {
+                            vTaskResume(ButtonPressResetTask);
+                        }
                         break;
                     case stateTwo:
                         currentState = stateThree;
@@ -66,9 +66,9 @@ void vStateMachineTask(void *pvParameters) {
                         if (ButtonPressSemaphoreTask) {
                             vTaskSuspend(ButtonPressSemaphoreTask);
                         }
-                        // if (ButtonPressResetTask) {
-                        //     vTaskSuspend(ButtonPressResetTask);
-                        // }
+                        if (ButtonPressResetTask) {
+                            vTaskSuspend(ButtonPressResetTask);
+                        }
                         //resume 4.x tasks
                         break;
                     case stateThree:

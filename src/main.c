@@ -28,6 +28,7 @@
 #include "StateMachine.h"
 #include "SwapBuffer.h"
 #include "BlinkingButtons.h"
+#include "TimerFunctionality.h"
 
 // FreeRTOS specific
 #define mainGENERIC_PRIORITY (tskIDLE_PRIORITY)
@@ -66,6 +67,7 @@ genericBinaryState_t changeState = { 0 };
  * (after it has been suspended) or not
  */
 genericBinaryState_t movingShapesDisplayTaskResumed = { 0 };
+TimerHandle_t deleteButtonCountNS = NULL;
 
 
 //Staic task allocation
@@ -103,6 +105,32 @@ static StackType_t uxIdleTaskStack[ configMINIMAL_STACK_SIZE ];
     Note that, as the array is necessarily of type StackType_t,
     configMINIMAL_STACK_SIZE is specified in words, not bytes. */
     *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+}
+
+/* configSUPPORT_STATIC_ALLOCATION and configUSE_TIMERS are both set to 1, so the
+application must provide an implementation of vApplicationGetTimerTaskMemory()
+to provide the memory that is used by the Timer service task. */
+void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer,
+                                     StackType_t **ppxTimerTaskStackBuffer,
+                                     uint32_t *pulTimerTaskStackSize )
+{
+/* If the buffers to be provided to the Timer task are declared inside this
+function then they must be declared static – otherwise they will be allocated on
+the stack and so not exists after this function exits. */
+static StaticTask_t xTimerTaskTCB;
+static StackType_t uxTimerTaskStack[ configTIMER_TASK_STACK_DEPTH ];
+
+    /* Pass out a pointer to the StaticTask_t structure in which the Timer
+    task’s state will be stored. */
+    *ppxTimerTaskTCBBuffer = &xTimerTaskTCB;
+
+    /* Pass out the array that will be used as the Timer task’s stack. */
+    *ppxTimerTaskStackBuffer = uxTimerTaskStack;
+
+    /* Pass out the size of the array pointed to by *ppxTimerTaskStackBuffer.
+    Note that, as the array is necessarily of type StackType_t,
+    configTIMER_TASK_STACK_DEPTH is specified in words, not bytes. */
+    *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
 }
 
 
@@ -170,6 +198,15 @@ int main(int argc, char *argv[])
 		goto err_buttonpresscountns_lock;
 	}
 
+// ---------------TIMER----------------------------------------------
+
+	deleteButtonCountNS = xTimerCreate("deleteButtonCountNS", pdMS_TO_TICKS(15000), pdTRUE,
+			(void *) 0, deleteButtonCountNSCallback);
+	if (!deleteButtonCountNS) {
+		PRINT_ERROR("Failed to create deleteButtonCountNS timer");
+		goto err_deletebuttoncountns_timer;
+	}
+	
 // ---------------TASKS----------------------------------------------
 
     if (xTaskCreate(vSwapBufferTask, "SwapBufferTask",
@@ -254,6 +291,8 @@ int main(int argc, char *argv[])
 	vTaskSuspend(ButtonPressNotificationTask);
 	vTaskSuspend(ButtonPressResetTask);
 
+    xTimerStart(deleteButtonCountNS, portMAX_DELAY);
+
 
 	printf("Numer of tasks: %lu\n\n", uxTaskGetNumberOfTasks());
 	tumFUtilPrintTaskStateList();
@@ -283,6 +322,8 @@ err_movingshapesdisplay_task:
 err_statemachine_task:
     vTaskDelete(SwapBufferTask);
 err_swapbuffer_task:
+	xTimerDelete(deleteButtonCountNS, 0);
+err_deletebuttoncountns_timer:
 	vSemaphoreDelete(buttonPressCountNS.lock);
 err_buttonpresscountns_lock:
 	vSemaphoreDelete(ButtonSPressed);

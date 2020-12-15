@@ -6,7 +6,7 @@
  * vBlinkingButtonsStaticTask().
  * 
  * The tasks create and manage the two blinking buttons for exercise
- * 3.2,2.
+ * 3.2.2.
  */
 
 #ifndef __BLINKING_BUTTONS_H__
@@ -14,6 +14,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "timers.h"
 
 #include "TUM_Draw.h"
 #include "TUM_Font.h"

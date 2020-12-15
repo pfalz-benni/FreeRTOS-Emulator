@@ -112,7 +112,11 @@ extern void vMainQueueSendPassed(void);
 //Macros addad by Benni so that they are not defined in FreeRTOS.h
 //with default value
 #define configUSE_STATS_FORMATTING_FUNCTIONS 1
-#define configUSE_TIMERS                    1
 #define configSUPPORT_STATIC_ALLOCATION     1
+//software timers
+#define configUSE_TIMERS                    1
+#define configTIMER_TASK_PRIORITY           2
+#define configTIMER_QUEUE_LENGTH            8
+#define configTIMER_TASK_STACK_DEPTH        256
 
 #endif /* FREERTOS_CONFIG_H */

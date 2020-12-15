@@ -181,6 +181,12 @@ void vButtonPressNotificationTask(void *pvParameters) {
 void vButtonPressResetTask(void *pvParameters) {
 
     while (1) {
-
+        if(ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
+            if (xSemaphoreTake(buttonPressCountNS.lock, portMAX_DELAY) == pdTRUE) {
+                buttonPressCountNS.values[0] = 0;
+                buttonPressCountNS.values[1] = 0;
+                xSemaphoreGive(buttonPressCountNS.lock);
+	        }
+        }
     }
 }

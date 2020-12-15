@@ -733,7 +733,7 @@ task that attempted the write. */
 #endif
 
 #ifndef configUSE_STATS_FORMATTING_FUNCTIONS
-#define configUSE_STATS_FORMATTING_FUNCTIONS 1 // Set from 0 to 1 by benni to use these functions
+#define configUSE_STATS_FORMATTING_FUNCTIONS 0
 #endif
 
 #ifndef portASSERT_IF_INTERRUPT_PRIORITY_INVALID
@@ -774,7 +774,7 @@ task that attempted the write. */
 
 #ifndef configSUPPORT_STATIC_ALLOCATION
 /* Defaults to 0 for backward compatibility. */
-#define configSUPPORT_STATIC_ALLOCATION 1 // Set from 0 to 1 by benni to use these functions
+#define configSUPPORT_STATIC_ALLOCATION 0
 #endif
 
 #ifndef configSUPPORT_DYNAMIC_ALLOCATION
