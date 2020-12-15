@@ -1,4 +1,4 @@
-#include "BlinkingButtons.h"
+#include "BlinkingButtonsDisplay.h"
 
 #define FPS_AVERAGE_COUNT 50
 #define FPS_FONT "IBMPlexSans-Bold.ttf"

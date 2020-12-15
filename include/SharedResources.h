@@ -19,6 +19,8 @@
 #define KEYCODE(CHAR) SDL_SCANCODE_##CHAR
 #define NUMBER_OF_TRACKED_KEYS 4
 
+#define NUMBER_QUEUE_LENGTH 200
+
 
 /**
  * @brief Contains information, whether a button on the keyboard is pressed or not.
@@ -59,6 +61,9 @@ typedef struct sharedIntegerVariable {
 } sharedIntegerVariable_t;
 
 
+
+
+
 // All the globally used variables declared in main.c
 extern TaskHandle_t MovingShapesDisplayTask;
 extern TaskHandle_t CheckingInputsTask;
@@ -71,6 +76,11 @@ extern TaskHandle_t ButtonPressSemaphoreTask;
 extern TaskHandle_t ButtonPressNotificationTask;
 extern TaskHandle_t ButtonPressResetTask;
 extern TaskHandle_t CountingSecondsTask;
+extern TaskHandle_t PrintTaskOutputsTask;
+extern TaskHandle_t Exercise4_1Task;
+extern TaskHandle_t Exercise4_2Task;
+extern TaskHandle_t Exercise4_3Task;
+extern TaskHandle_t Exercise4_4Task;
 
 extern SemaphoreHandle_t ScreenLock;
 extern SemaphoreHandle_t ButtonSPressed;
@@ -81,5 +91,6 @@ extern sharedIntegerVariable_t movingShapesDisplayTaskResumed;
 extern sharedIntegerVariable_t secondsPassedTotal;
 extern buttonPresses_t buttonPressCountNS;
 extern TimerHandle_t deleteButtonCountNS;
+extern QueueHandle_t numbersToPrint;
 
 #endif

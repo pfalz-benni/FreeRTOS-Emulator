@@ -70,10 +70,40 @@ void vStateMachineTask(void *pvParameters) {
                             vTaskSuspend(ButtonPressResetTask);
                         }
                         //resume 4.x tasks
+                        //but first clear the queue
+                        xQueueReset(numbersToPrint);
+                        if (Exercise4_1Task) {
+                            vTaskResume(Exercise4_1Task);
+                        }
+                        if (Exercise4_2Task) {
+                            vTaskResume(Exercise4_2Task);
+                        }
+                        if (Exercise4_4Task) {
+                            vTaskResume(Exercise4_4Task);
+                        }
+                        //TODO
+                        if (PrintTaskOutputsTask) {
+                            vTaskResume(PrintTaskOutputsTask);
+                            xTaskNotifyGive(PrintTaskOutputsTask);
+                        }
                         break;
                     case stateThree:
                         currentState = stateOne;
                         //suspend 4.x tasks
+                        if (Exercise4_1Task) {
+                            vTaskSuspend(Exercise4_1Task);
+                        }
+                        if (Exercise4_2Task) {
+                            vTaskSuspend(Exercise4_2Task);
+                        }
+                        if (Exercise4_4Task) {
+                            vTaskSuspend(Exercise4_4Task);
+                        }
+                        //TODO
+                        if (PrintTaskOutputsTask) {
+                            vTaskSuspend(PrintTaskOutputsTask);
+                        }
+                        //resume 2.x task
                         if (MovingShapesDisplayTask) {
                             vTaskResume(MovingShapesDisplayTask);
                             //set flag that task knows it has been resumed and can

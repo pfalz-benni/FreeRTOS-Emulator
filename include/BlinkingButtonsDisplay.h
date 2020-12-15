@@ -1,14 +1,14 @@
 /**
- * @file BlinkingButtons.h
+ * @file BlinkingButtonsDisplay.h
  * @author Benedikt Witteler
  * @date 14 December 2020
  * @brief Functionality used in vBlinkingButtonsDynamicTask(), 
  * vBlinkingButtonsStaticTask() and others drawing on the display 
- * for exerices 4.
+ * for exerices 3.
  */
 
-#ifndef __BLINKING_BUTTONS_H__
-#define __BLINKING_BUTTONS_H__
+#ifndef __BLINKING_BUTTONS_DISPLAY_H__
+#define __BLINKING_BUTTONS_DISPLAY_H__
 
 #include "FreeRTOS.h"
 #include "task.h"

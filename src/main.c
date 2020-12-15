@@ -27,8 +27,9 @@
 #include "SharedResources.h"
 #include "StateMachine.h"
 #include "SwapBuffer.h"
-#include "BlinkingButtons.h"
+#include "BlinkingButtonsDisplay.h"
 #include "TimerFunctionality.h"
+#include "PrintingTasksDisplay.h"
 
 // FreeRTOS specific
 #define mainGENERIC_PRIORITY (tskIDLE_PRIORITY)
@@ -49,6 +50,11 @@ TaskHandle_t ButtonPressSemaphoreTask = NULL; //exercise 3.2.3
 TaskHandle_t ButtonPressNotificationTask = NULL; //exercise 3.2.3
 TaskHandle_t ButtonPressResetTask = NULL; //exercise 3.2.3
 TaskHandle_t CountingSecondsTask = NULL; //exercise 3.2.4
+TaskHandle_t PrintTaskOutputsTask = NULL; //exercise 4
+TaskHandle_t Exercise4_1Task = NULL;
+TaskHandle_t Exercise4_2Task = NULL;
+TaskHandle_t Exercise4_3Task = NULL;
+TaskHandle_t Exercise4_4Task = NULL;
 
 
 // Variables that are declares as extern because they guard resources
@@ -74,6 +80,7 @@ sharedIntegerVariable_t movingShapesDisplayTaskResumed = { 0 };
  */
 sharedIntegerVariable_t secondsPassedTotal = { 0 };
 TimerHandle_t deleteButtonCountNS = NULL;
+QueueHandle_t numbersToPrint = NULL; 
 
 
 //Staic task allocation
@@ -157,6 +164,13 @@ int main(int argc, char *argv[])
 		PRINT_ERROR("Failed to create secondsPassedTotal lock");
 		goto err_secondspassedtotal_lock;
 	}
+// ---------------QUEUE----------------------------------------------
+
+	numbersToPrint = xQueueCreate(NUMBER_QUEUE_LENGTH, sizeof(char));
+	if (!numbersToPrint) {
+		PRINT_ERROR("Failed to create secondsPassedTotal lock");
+		goto err_numberstoprint_queue;
+	}
 
 // ---------------TIMER----------------------------------------------
 
@@ -170,14 +184,14 @@ int main(int argc, char *argv[])
 // ---------------TASKS----------------------------------------------
 
     if (xTaskCreate(vSwapBufferTask, "SwapBufferTask",
-			mainGENERIC_STACK_SIZE * 2, NULL, configMAX_PRIORITIES,
+			mainGENERIC_STACK_SIZE * 2, NULL, 10,
 			&StateMachineTask) != pdPASS) {
 		PRINT_ERROR("Failed to create 'SwapBufferTask'");
 		goto err_swapbuffer_task;
 	}
 
     if (xTaskCreate(vStateMachineTask, "StateMachineTask",
-			mainGENERIC_STACK_SIZE * 2, NULL, configMAX_PRIORITIES - 1,
+			mainGENERIC_STACK_SIZE * 2, NULL, 9,
 			&StateMachineTask) != pdPASS) {
 		PRINT_ERROR("Failed to create 'StateMachineTask'");
 		goto err_statemachine_task;
@@ -191,7 +205,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (xTaskCreate(vCheckingInputsTask, "CheckingInputsTask",
-			mainGENERIC_STACK_SIZE * 2, NULL, mainGENERIC_PRIORITY,
+			mainGENERIC_STACK_SIZE * 2, NULL, 6,
 			&CheckingInputsTask) != pdPASS) {
 		PRINT_ERROR("Failed to create 'CheckingInputsTask'");
         //could use something like on master TASK_PRINT_ERROR
@@ -202,7 +216,7 @@ int main(int argc, char *argv[])
 			mainGENERIC_STACK_SIZE, NULL, mainGENERIC_PRIORITY,
 			&BlinkingButtonsDrawTask) != pdPASS) {
 		PRINT_ERROR("Failed to create 'BlinkingButtonsDrawTask'");
-		goto err_blinkingbuttonsdrawtask_task;
+		goto err_blinkingbuttonsdraw_task;
 	}
 
 	if (xTaskCreate(vBlinkingButtonsDynamicTask, "BlinkingButtonsDynamicTask",
@@ -245,8 +259,44 @@ int main(int argc, char *argv[])
 			mainGENERIC_STACK_SIZE, NULL, mainGENERIC_PRIORITY,
 			&CountingSecondsTask) != pdPASS) {
 		PRINT_ERROR("Failed to create 'CountingSecondsTask'");
-		goto err_countingsecondstask_task;
+		goto err_countingseconds_task;
 	}
+
+	if (xTaskCreate(vPrintTaskOutputsTask, "PrintTaskOutputsTask",
+			mainGENERIC_STACK_SIZE, NULL, 5,
+			&PrintTaskOutputsTask) != pdPASS) {
+		PRINT_ERROR("Failed to create 'PrintTaskOutputsTask'");
+		goto err_printtaskoutputs_task;
+	}
+
+	if (xTaskCreate(vExercise4_1Task, "Exercise4_1Task",
+			mainGENERIC_STACK_SIZE, NULL, 1,
+			&Exercise4_1Task) != pdPASS) {
+		PRINT_ERROR("Failed to create 'Exercise4_1Task'");
+		goto err_exercise4_1_task;
+	}
+
+	if (xTaskCreate(vExercise4_2Task, "Exercise4_2Task",
+			mainGENERIC_STACK_SIZE, NULL, 2,
+			&Exercise4_2Task) != pdPASS) {
+		PRINT_ERROR("Failed to create 'Exercise4_2Task'");
+		goto err_exercise4_2_task;
+	}
+
+	if (xTaskCreate(vExercise4_3Task, "Exercise4_3Task",
+			mainGENERIC_STACK_SIZE, NULL, 3,
+			&Exercise4_3Task) != pdPASS) {
+		PRINT_ERROR("Failed to create 'Exercise4_3Task'");
+		goto err_exercise4_3_task;
+	}
+
+	if (xTaskCreate(vExercise4_4Task, "Exercise4_4Task",
+			mainGENERIC_STACK_SIZE, NULL, 4,
+			&Exercise4_4Task) != pdPASS) {
+		PRINT_ERROR("Failed to create 'Exercise4_4Task'");
+		goto err_exercise4_4_task;
+	}
+
 
     //Suspending diffent tasks because they are managed 
     //from inside the state machine task
@@ -257,6 +307,12 @@ int main(int argc, char *argv[])
 	vTaskSuspend(ButtonPressSemaphoreTask);
 	vTaskSuspend(ButtonPressNotificationTask);
 	vTaskSuspend(ButtonPressResetTask);
+	vTaskSuspend(PrintTaskOutputsTask);
+	vTaskSuspend(Exercise4_1Task);
+	vTaskSuspend(Exercise4_2Task);
+	vTaskSuspend(Exercise4_3Task);
+	vTaskSuspend(Exercise4_4Task);
+
 
     xTimerStart(deleteButtonCountNS, portMAX_DELAY);
 
@@ -270,7 +326,17 @@ int main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 
 
-err_countingsecondstask_task:
+err_exercise4_4_task:
+	vTaskDelete(Exercise4_3Task);
+err_exercise4_3_task:
+	vTaskDelete(Exercise4_2Task);
+err_exercise4_2_task:
+	vTaskDelete(Exercise4_1Task);
+err_exercise4_1_task:
+	vTaskDelete(PrintTaskOutputsTask);
+err_printtaskoutputs_task:
+	vTaskDelete(CountingSecondsTask);
+err_countingseconds_task:
 	vTaskDelete(ButtonPressResetTask);
 err_buttonpressreset_task:
 	vTaskDelete(ButtonPressNotificationTask);
@@ -282,7 +348,7 @@ err_blinkingbuttonsstatic_task:
 	vTaskDelete(BlinkingButtonsDynamicTask);
 err_blinkingbuttonsdynamic_task:
 	vTaskDelete(BlinkingButtonsDrawTask);
-err_blinkingbuttonsdrawtask_task:
+err_blinkingbuttonsdraw_task:
 	vTaskDelete(CheckingInputsTask);
 err_checkinginputs_task:
     vTaskDelete(MovingShapesDisplayTask);
@@ -293,6 +359,8 @@ err_statemachine_task:
 err_swapbuffer_task:
 	xTimerDelete(deleteButtonCountNS, 0);
 err_deletebuttoncountns_timer:
+	vQueueDelete(numbersToPrint);
+err_numberstoprint_queue:
 	vSemaphoreDelete(secondsPassedTotal.lock);
 err_secondspassedtotal_lock:
 	vSemaphoreDelete(buttonPressCountNS.lock);
