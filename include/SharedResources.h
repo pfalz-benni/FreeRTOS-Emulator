@@ -95,12 +95,6 @@ extern buttonPresses_t buttonPressCountABCD;
 extern sharedIntegerVariable_t changeState;
 
 /**
- * Infomation wheather the MovingShapesDisplayTask() has been resumed
- * (after it has been suspended) or not
- */
-extern sharedIntegerVariable_t movingShapesDisplayTaskResumed;
-
-/**
  * Global variable being counted up every second unless counting
  * is paused.
  */

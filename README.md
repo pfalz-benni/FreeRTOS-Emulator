@@ -3,8 +3,14 @@
 This is the solution to the exercise part of the TUM ESPL.
 
 ## What is where?
-1. Git-Exercise: TODO
-2. Exercises 2, 3 and 4: here
+
+### Git-Exercise:
+<https://github.com/pfalz-benni/git-tutorial-duplicate>  
+Since this is a private repository (by the time I finished the exercise it wasn't clear whether the git exercise repository was supposed to be private or public) I invited "PhilippvK" (already a collaborator) and "alxhoff" (pending invite) to the repository. As a private repository it cannot be a fork.  
+*For completeness: The fork I originally made is <https://github.com/pfalz-benni/git-tutorial> but this version is not supposed to be graded.*
+
+### Exercises 2, 3 and 4:
+Here in the submitted folder. It is a copy of the exercises branch of the repository <https://github.com/pfalz-benni/FreeRTOS-Emulator/tree/exercises>.
 
 ## How to run the programm for exercises 2, 3 and 4?
 Move into the build folder, run `cmake ..` to create a make file and run `make` in the same directory to build the project. The executable is created in the bin folder with the name FreeRTOS_Emulator.  
@@ -34,3 +40,6 @@ For me nothing happened, no matter how low the number was I set the stack size t
 
 ### 4.0.3 Play around with the priorities from exercise in Section 3.3.2 (e.g. set all priorities to the same value, inverse the priority order, etc.). What can you observe?
 Output depends on where within one tick the a task is executed. If a task has a higher priority it is executed earlier.
+
+## Documentation
+A small doxygen documentation for the exercise part of the ESPL can be found in the docs folder. In there, it is created using the command `doxygen DoxyfileExercises`.

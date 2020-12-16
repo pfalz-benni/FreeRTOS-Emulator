@@ -62,7 +62,6 @@ buttons_buffer_t buttons = { 0 };
 buttonPresses_t buttonPressCountABCD = { 0 };
 buttonPresses_t buttonPressCountNS = { 0 }; 
 sharedIntegerVariable_t changeState = { 0 };
-sharedIntegerVariable_t movingShapesDisplayTaskResumed = { 0 };
 sharedIntegerVariable_t secondsPassedTotal = { 0 };
 TimerHandle_t deleteButtonCountNS = NULL;
 QueueHandle_t numbersToPrint = NULL;
@@ -122,13 +121,6 @@ int main(int argc, char *argv[])
 	if (!changeState.lock) {
 		PRINT_ERROR("Failed to create changeState lock");
 		goto err_changestate_lock;
-	}
-
-	movingShapesDisplayTaskResumed.lock = xSemaphoreCreateMutex();
-	if (!movingShapesDisplayTaskResumed.lock) {
-		PRINT_ERROR(
-			"Failed to create movingShapesDisplayTaskResumed lock");
-		goto err_movingShapesDisplayTaskResumed_lock;
 	}
 
 	ButtonSPressed = xSemaphoreCreateBinary();
@@ -360,8 +352,6 @@ err_buttonpresscountns_lock:
 err_wakeTask4_3_semaphore:
 	vSemaphoreDelete(ButtonSPressed);
 err_buttonspressed_semaphore:
-	vSemaphoreDelete(movingShapesDisplayTaskResumed.lock);
-err_movingShapesDisplayTaskResumed_lock:
 	vSemaphoreDelete(changeState.lock);
 err_changestate_lock:
 	vSemaphoreDelete(buttonPressCountABCD.lock);

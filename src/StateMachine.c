@@ -6,7 +6,6 @@ void giveResourcesState1To2()
 {
 	//only one task suspended
 	xSemaphoreGive(ScreenLock);
-	xSemaphoreGive(movingShapesDisplayTaskResumed.lock);
 	xSemaphoreGive(buttonPressCountABCD.lock);
 }
 
@@ -136,11 +135,7 @@ void manageTasksState3To1()
 		vTaskResume(MovingShapesDisplayTask);
 		//set flag that task knows it has been resumed and can
 		//adjust accordingly
-		if (xSemaphoreTake(movingShapesDisplayTaskResumed.lock,
-				   portMAX_DELAY) == pdTRUE) {
-			movingShapesDisplayTaskResumed.value = 1;
-			xSemaphoreGive(movingShapesDisplayTaskResumed.lock);
-		}
+		xTaskNotifyGive(MovingShapesDisplayTask);
 	}
 }
 

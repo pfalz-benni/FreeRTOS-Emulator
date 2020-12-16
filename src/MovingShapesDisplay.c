@@ -10,36 +10,26 @@ void resetMovingObjectsAfterResumption(Circle_h_t *circle,
 				       TickType_t *xLastWakeTime,
 				       TickType_t *initialWakeTime)
 {
-	if (xSemaphoreTake(movingShapesDisplayTaskResumed.lock,
-			   portMAX_DELAY) == pdTRUE) {
-		if (movingShapesDisplayTaskResumed.value) {
-			Circle__destruct(circle);
-			Rectangle__destruct(rectangle);
-			Message__destruct(topMessage);
+	if (ulTaskNotifyTake(pdTRUE, 0)) {
+		Circle__destruct(circle);
+		Rectangle__destruct(rectangle);
+		Message__destruct(topMessage);
 
-			*circle = Circle__init(
-				(coord_t){ mobileScreenCenter->x -
-						   DISTANCE_TO_TRIANGLE,
-					   mobileScreenCenter->y },
-				RADIUS_CIRCLE, TUMBlue);
-			*rectangle = Rectangle__init(
-				(coord_t){ mobileScreenCenter->x +
-						   DISTANCE_TO_TRIANGLE,
-					   mobileScreenCenter->y },
-				HEIGHT_SQUARE, HEIGHT_SQUARE, Olive);
-			*topMessage = Message__init(
-				(coord_t){
-					mobileScreenCenter->x,
-					mobileScreenCenter->y -
-						SCREEN_CENTER.y +
-						DISTANCE_VERTICAL_TO_BORDER },
-				"Hello, I can move!", Black);
+		*circle = Circle__init(
+			(coord_t){ mobileScreenCenter->x - DISTANCE_TO_TRIANGLE,
+				   mobileScreenCenter->y },
+			RADIUS_CIRCLE, TUMBlue);
+		*rectangle = Rectangle__init(
+			(coord_t){ mobileScreenCenter->x + DISTANCE_TO_TRIANGLE,
+				   mobileScreenCenter->y },
+			HEIGHT_SQUARE, HEIGHT_SQUARE, Olive);
+		*topMessage = Message__init(
+			(coord_t){ mobileScreenCenter->x,
+				   mobileScreenCenter->y - SCREEN_CENTER.y +
+					   DISTANCE_VERTICAL_TO_BORDER },
+			"Hello, I can move!", Black);
 
-			*initialWakeTime = *xLastWakeTime;
-
-			movingShapesDisplayTaskResumed.value = 0;
-		}
-		xSemaphoreGive(movingShapesDisplayTaskResumed.lock);
+		*initialWakeTime = *xLastWakeTime;
 	}
 }
 

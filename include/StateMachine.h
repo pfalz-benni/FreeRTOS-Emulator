@@ -20,6 +20,10 @@
 
 #define TIME_STATEMACHINETASK_DELAY 100
 
+void giveResourcesState1To2();
+void giveResourcesState2To3();
+void giveResourcesState3To1();
+
 void manageTasksState1To2();
 void manageTasksState2To3();
 void manageTasksState3To1();
