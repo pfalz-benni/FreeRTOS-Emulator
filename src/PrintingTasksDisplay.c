@@ -99,6 +99,7 @@ void vExercise4_1Task(void *pvParameters)
 	toQueue.value = '1';
 
 	while (1) {
+		// printf("Task4_1\n");
 		sendToQueueAndSuspendTask(Exercise4_1Task, &toQueue,
 					  &xLastWakeTime, &initialWakeTime, 1);
 	}
@@ -112,6 +113,7 @@ void vExercise4_2Task(void *pvParameters)
 	toQueue.value = '2';
 
 	while (1) {
+		// printf("Task4_2\n");
 		sendToQueueAndSuspendTask(Exercise4_2Task, &toQueue,
 					  &xLastWakeTime, &initialWakeTime, 2);
 	}
@@ -126,6 +128,7 @@ void vExercise4_3Task(void *pvParameters)
 
 	while (1) {
 		if (xSemaphoreTake(wakeTask4_3, portMAX_DELAY) == pdTRUE) {
+			// printf("Task4_3\n");
 			xLastWakeTime = xTaskGetTickCount();
 			toQueue.tick = xLastWakeTime;
 			xQueueSend(numbersToPrint, &toQueue, portMAX_DELAY);
@@ -141,6 +144,7 @@ void vExercise4_4Task(void *pvParameters)
 	toQueue.value = '4';
 
 	while (1) {
+		// printf("Task4_4\n");
 		sendToQueueAndSuspendTask(Exercise4_4Task, &toQueue,
 					  &xLastWakeTime, &initialWakeTime, 4);
 	}

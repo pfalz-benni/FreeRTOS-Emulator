@@ -153,9 +153,9 @@ void vStateMachineTask(void *pvParameters)
 	vTaskResume(MovingShapesDisplayTask);
 
 	while (1) {
-		if (xSemaphoreTake(changeState.lock, portMAX_DELAY) == pdTRUE) {
+		if (xSemaphoreTake(changeState.lock, 0) == pdTRUE) {
 			if (changeState.value) {
-				printf("State Changing\n");
+				// printf("State Changing\n");
 				changeState.value = 0;
 
 				switch (currentState) {
