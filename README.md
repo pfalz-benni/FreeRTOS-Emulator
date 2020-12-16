@@ -6,8 +6,8 @@ This is the solution to the exercise part of the TUM ESPL.
 
 ### Git-Exercise:
 <https://github.com/pfalz-benni/git-tutorial-duplicate>  
-Since this is a private repository (by the time I finished the exercise it wasn't clear whether the git exercise repository was supposed to be private or public) I invited "PhilippvK" (already a collaborator) and "alxhoff" (pending invite) to the repository. As a private repository it cannot be a fork.  
-*For completeness: The fork I originally made is <https://github.com/pfalz-benni/git-tutorial> but this version is not supposed to be graded.*
+Since this is a private repository (by the time I finished the exercise it wasn't clear whether the git-exercise repository was supposed to be private or public) I invited "PhilippvK" (already a collaborator) and "alxhoff" (pending invite) to the repository. As a private repository it cannot be a fork.  
+*For completeness: The fork I originally made is <https://github.com/pfalz-benni/git-tutorial> but this version is not supposed to be graded. As forking was a task of the git-exercise the repository is added here.*
 
 ### Exercises 2, 3 and 4:
 Here in the submitted folder. It is a copy of the exercises branch of the repository <https://github.com/pfalz-benni/FreeRTOS-Emulator/tree/exercises>.
