@@ -1,11 +1,24 @@
 #include "StateMachine.h"
 
+//give back all the locks the suspended tasks could hold
+//that can be accessed in new state
+void giveResourcesState1To2()
+{
+	//only one task suspended
+	xSemaphoreGive(ScreenLock);
+	xSemaphoreGive(movingShapesDisplayTaskResumed.lock);
+	xSemaphoreGive(buttonPressCountABCD.lock);
+}
+
 void manageTasksState1To2()
 {
 	//suspend 2.x task
 	if (MovingShapesDisplayTask) {
 		vTaskSuspend(MovingShapesDisplayTask);
 	}
+
+	giveResourcesState1To2();
+
 	//resume 3.x tasks
 	if (BlinkingButtonsDrawTask) {
 		vTaskResume(BlinkingButtonsDrawTask);
@@ -25,6 +38,21 @@ void manageTasksState1To2()
 	if (ButtonPressResetTask) {
 		vTaskResume(ButtonPressResetTask);
 	}
+}
+
+void giveResourcesState2To3()
+{
+	//BlinkingButtonsDrawTask:
+	xSemaphoreGive(ScreenLock);
+	xSemaphoreGive(secondsPassedTotal.lock); //is still incremented in background
+	xSemaphoreGive(buttonPressCountNS.lock); //might be pressed in background
+
+	//ButtonPressSemaphoreTask:
+	// xSemaphoreGive(buttonPressCountNS.lock); //already given back
+	//ButtonPressNotificationTask:
+	// xSemaphoreGive(buttonPressCountNS.lock); //already given back
+	//ButtonPressResetTask:
+	// xSemaphoreGive(buttonPressCountNS.lock); //already given back
 }
 
 void manageTasksState2To3()
@@ -48,6 +76,9 @@ void manageTasksState2To3()
 	if (ButtonPressResetTask) {
 		vTaskSuspend(ButtonPressResetTask);
 	}
+
+	giveResourcesState2To3();
+
 	//resume 4.x tasks
 	//but first clear the queue
 	xQueueReset(numbersToPrint);
@@ -73,6 +104,12 @@ void manageTasksState2To3()
 	}
 }
 
+void giveResourcesState3To1()
+{
+	//PrintTaskOutputsTask:
+	xSemaphoreGive(ScreenLock);
+}
+
 void manageTasksState3To1()
 {
 	//suspend 4.x tasks
@@ -91,6 +128,9 @@ void manageTasksState3To1()
 	if (PrintTaskOutputsTask) {
 		vTaskSuspend(PrintTaskOutputsTask);
 	}
+
+	giveResourcesState3To1();
+
 	//resume 2.x task
 	if (MovingShapesDisplayTask) {
 		vTaskResume(MovingShapesDisplayTask);

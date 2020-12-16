@@ -64,6 +64,7 @@ typedef struct tuple {
 } tuple_t;
 
 // All the globally used variables declared in main.c
+// Task handles:
 extern TaskHandle_t MovingShapesDisplayTask;
 extern TaskHandle_t CheckingInputsTask;
 extern TaskHandle_t StateMachineTask;
@@ -81,15 +82,31 @@ extern TaskHandle_t Exercise4_2Task;
 extern TaskHandle_t Exercise4_3Task;
 extern TaskHandle_t Exercise4_4Task;
 
+// Semaphores, Mutexes, Timers, Queues and others:
 extern SemaphoreHandle_t ScreenLock;
 extern SemaphoreHandle_t ButtonSPressed;
 extern SemaphoreHandle_t wakeTask4_3;
 extern buttons_buffer_t buttons;
 extern buttonPresses_t buttonPressCountABCD;
+
+/**
+ * Infomation wheather the state machien has to change state or not
+ */
 extern sharedIntegerVariable_t changeState;
+
+/**
+ * Infomation wheather the MovingShapesDisplayTask() has been resumed
+ * (after it has been suspended) or not
+ */
 extern sharedIntegerVariable_t movingShapesDisplayTaskResumed;
+
+/**
+ * Global variable being counted up every second unless counting
+ * is paused.
+ */
 extern sharedIntegerVariable_t secondsPassedTotal;
-extern buttonPresses_t buttonPressCountNS;
+
+extern buttonPresses_t buttonPressCountNS; //not the entire value array is used
 extern TimerHandle_t deleteButtonCountNS;
 extern QueueHandle_t numbersToPrint;
 

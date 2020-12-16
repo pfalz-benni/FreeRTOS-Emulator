@@ -20,7 +20,7 @@
 
 #include "SharedResources.h"
 
-#define TIME_FRAMERATE_PERIOD_MS (TickType_t)20
+#define TIME_FRAMERATE_PERIOD_MS (TickType_t) 20 //results in 50 Hz refresh rate
 
 void vSwapBufferTask(void *pvParameters);
 

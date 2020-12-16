@@ -3,17 +3,6 @@
  * @author Benedikt Witteler
  * @date 28 November 2020
  * @brief A class to handle the position of objects created using TUM_Draw.
- * 
- * @mainpage FreeRTOS Emulator
- *
- * @section intro_sec Heads up
- * 
- * I decided not to use funcition pointers inside structures as a way to
- * implemente methods. Therefore, "methods" - meaning functions that operate
- * on an instance of a structure - cannot be found in the documentation of
- * its class (= structure) but only in the source file containing the defintion
- * of the class.
- *
  */
 
 #ifndef __POSITION_PROPERTIES_H__

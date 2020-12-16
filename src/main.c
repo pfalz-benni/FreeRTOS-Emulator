@@ -48,34 +48,21 @@ TaskHandle_t ButtonPressSemaphoreTask = NULL; //exercise 3.2.3
 TaskHandle_t ButtonPressNotificationTask = NULL; //exercise 3.2.3
 TaskHandle_t ButtonPressResetTask = NULL; //exercise 3.2.3
 TaskHandle_t CountingSecondsTask = NULL; //exercise 3.2.4
-TaskHandle_t PrintTaskOutputsTask = NULL; //exercise 4
+TaskHandle_t PrintTaskOutputsTask = NULL; //exercise 4...
 TaskHandle_t Exercise4_1Task = NULL;
 TaskHandle_t Exercise4_2Task = NULL;
 TaskHandle_t Exercise4_3Task = NULL;
 TaskHandle_t Exercise4_4Task = NULL;
 
-// Variables that are declares as extern because they guard resources
-// and must therefore be used in different tasks in different
-// source files with differnet compilation units.
+
 SemaphoreHandle_t ScreenLock = NULL;
 SemaphoreHandle_t ButtonSPressed = NULL;
 SemaphoreHandle_t wakeTask4_3 = NULL;
 buttons_buffer_t buttons = { 0 };
 buttonPresses_t buttonPressCountABCD = { 0 };
-buttonPresses_t buttonPressCountNS = { 0 }; //not the entire value array is used
-/**
- * Infomation wheather the state machien has changed state or not
- */
+buttonPresses_t buttonPressCountNS = { 0 }; 
 sharedIntegerVariable_t changeState = { 0 };
-/**
- * Infomation wheather the MovingShapesDisplayTask() has been resumed
- * (after it has been suspended) or not
- */
 sharedIntegerVariable_t movingShapesDisplayTaskResumed = { 0 };
-/**
- * Global variable being counted up every second unless counting
- * is paused.
- */
 sharedIntegerVariable_t secondsPassedTotal = { 0 };
 TimerHandle_t deleteButtonCountNS = NULL;
 QueueHandle_t numbersToPrint = NULL;
