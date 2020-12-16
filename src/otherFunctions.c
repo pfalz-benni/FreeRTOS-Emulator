@@ -31,14 +31,18 @@
 // 	return phi;
 // }
 
-void testMemoryAllocAndFree() {
+void testMemoryAllocAndFree()
+{
 	Circle_h_t circleNull;
-	printf("Adress:%p\n", circleNull);
+	// printf("Adress:%p\n", circleNull);
 
-	circleNull = Circle__init((coord_t) {100,100}, 50, TUMBlue);
+	circleNull = Circle__init((coord_t){ 100, 100 }, 50, TUMBlue);
 	printf("Adress:%p\n", circleNull);
-	printf("x=%d, y=%d\n", PositionProperties__getX(Circle__getPositionProperties(circleNull)),
-		   PositionProperties__getY(Circle__getPositionProperties(circleNull)));
+	printf("x=%d, y=%d\n",
+	       PositionProperties__getX(
+		       Circle__getPositionProperties(circleNull)),
+	       PositionProperties__getY(
+		       Circle__getPositionProperties(circleNull)));
 
 	Circle__destruct(&circleNull);
 	printf("Adress:%p\n", circleNull);
@@ -49,15 +53,15 @@ void testMemoryAllocAndFree() {
 	Triangle_h_t triangle;
 	Message_h_t message;
 	for (int i = 0; i < 50000; i++) {
-		circle = Circle__init((coord_t) {100,100}, 50, TUMBlue);
-		rectangle = Rectangle__init((coord_t) {200,200}, 50, 50, Black);
-		triangle = Triangle__init((coord_t) {40,40}, 80, TUMBlue);
-		message = Message__init((coord_t) {8,8},"Hello" , Black);
+		circle = Circle__init((coord_t){ 100, 100 }, 50, TUMBlue);
+		rectangle =
+			Rectangle__init((coord_t){ 200, 200 }, 50, 50, Black);
+		triangle = Triangle__init((coord_t){ 40, 40 }, 80, TUMBlue);
+		message = Message__init((coord_t){ 8, 8 }, "Hello", Black);
 
 		Circle__destruct(&circle);
 		Rectangle__destruct(&rectangle);
 		Triangle__destruct(&triangle);
 		Message__destruct(&message);
-
 	}
 }

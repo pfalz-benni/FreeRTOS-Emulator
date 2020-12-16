@@ -12,11 +12,16 @@ void vSwapBufferTask(void *pvParameters) {
 
     while (1) {
         if (xSemaphoreTake(ScreenLock, portMAX_DELAY) == pdTRUE) {
-            tumDrawUpdateScreen(); // Refresh the screen
-							       // Everything written on the screen before landed this kind of back buffer
-            tumEventFetchEvents(FETCH_EVENT_BLOCK); // Query events backend for new events, ie. button presses
+            // Refresh the screen
+			// Everything written on the screen before landed this kind of back buffer
+            tumDrawUpdateScreen();
+            
+            // Query events backend for new events, ie. button presses
+            tumEventFetchEvents(FETCH_EVENT_BLOCK);
+            
             xSemaphoreGive(ScreenLock);
             // xSemaphoreGive(DrawSignal);
+
             vTaskDelayUntil(&xLastWakeTime,
                             pdMS_TO_TICKS(TIME_FRAMERATE_PERIOD_MS));
         }

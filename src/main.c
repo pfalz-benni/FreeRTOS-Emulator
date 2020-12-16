@@ -34,9 +34,7 @@
 // FreeRTOS specific
 #define mainGENERIC_PRIORITY (tskIDLE_PRIORITY)
 #define mainGENERIC_STACK_SIZE ((unsigned short)2560)
-
-#define STACK_SIZE_STATIC 200 
-
+#define STACK_SIZE_STATIC 200
 
 // Task handles
 TaskHandle_t MovingShapesDisplayTask = NULL;
@@ -55,7 +53,6 @@ TaskHandle_t Exercise4_1Task = NULL;
 TaskHandle_t Exercise4_2Task = NULL;
 TaskHandle_t Exercise4_3Task = NULL;
 TaskHandle_t Exercise4_4Task = NULL;
-
 
 // Variables that are declares as extern because they guard resources
 // and must therefore be used in different tasks in different
@@ -81,8 +78,7 @@ sharedIntegerVariable_t movingShapesDisplayTaskResumed = { 0 };
  */
 sharedIntegerVariable_t secondsPassedTotal = { 0 };
 TimerHandle_t deleteButtonCountNS = NULL;
-QueueHandle_t numbersToPrint = NULL; 
-
+QueueHandle_t numbersToPrint = NULL;
 
 //Staic task allocation
 /**
@@ -93,8 +89,7 @@ StaticTask_t xTaskBuffer;
 /**
  * Buffer that vBlinkingButtonsStaticTask() will use as its stack
  */
-StackType_t xStack[ STACK_SIZE_STATIC ];
-
+StackType_t xStack[STACK_SIZE_STATIC];
 
 int main(int argc, char *argv[])
 {
@@ -117,7 +112,7 @@ int main(int argc, char *argv[])
 		goto err_init_audio;
 	}
 
-// ---------------SEMAPHORES-----------------------------------------
+	// ---------------SEMAPHORES-----------------------------------------
 	buttons.lock = xSemaphoreCreateMutex(); // Locking mechanism
 	if (!buttons.lock) {
 		PRINT_ERROR("Failed to create buttons lock");
@@ -136,7 +131,7 @@ int main(int argc, char *argv[])
 		goto err_buttonpresscountabcd_lock;
 	}
 
-    changeState.lock = xSemaphoreCreateMutex();
+	changeState.lock = xSemaphoreCreateMutex();
 	if (!changeState.lock) {
 		PRINT_ERROR("Failed to create changeState lock");
 		goto err_changestate_lock;
@@ -144,7 +139,8 @@ int main(int argc, char *argv[])
 
 	movingShapesDisplayTaskResumed.lock = xSemaphoreCreateMutex();
 	if (!movingShapesDisplayTaskResumed.lock) {
-		PRINT_ERROR("Failed to create movingShapesDisplayTaskResumed lock");
+		PRINT_ERROR(
+			"Failed to create movingShapesDisplayTaskResumed lock");
 		goto err_movingShapesDisplayTaskResumed_lock;
 	}
 
@@ -171,33 +167,32 @@ int main(int argc, char *argv[])
 		PRINT_ERROR("Failed to create secondsPassedTotal lock");
 		goto err_secondspassedtotal_lock;
 	}
-// ---------------QUEUE----------------------------------------------
 
+	// ---------------QUEUE----------------------------------------------
 	numbersToPrint = xQueueCreate(NUMBER_QUEUE_LENGTH, sizeof(tuple_t));
 	if (!numbersToPrint) {
 		PRINT_ERROR("Failed to create secondsPassedTotal lock");
 		goto err_numberstoprint_queue;
 	}
 
-// ---------------TIMER----------------------------------------------
-
-	deleteButtonCountNS = xTimerCreate("deleteButtonCountNS", pdMS_TO_TICKS(15000), pdTRUE,
-			(void *) 0, deleteButtonCountNSCallback);
+	// ---------------TIMER----------------------------------------------
+	deleteButtonCountNS =
+		xTimerCreate("deleteButtonCountNS", pdMS_TO_TICKS(15000),
+			     pdTRUE, (void *)0, deleteButtonCountNSCallback);
 	if (!deleteButtonCountNS) {
 		PRINT_ERROR("Failed to create deleteButtonCountNS timer");
 		goto err_deletebuttoncountns_timer;
 	}
-	
-// ---------------TASKS----------------------------------------------
 
-    if (xTaskCreate(vSwapBufferTask, "SwapBufferTask",
+	// ---------------TASKS----------------------------------------------
+	if (xTaskCreate(vSwapBufferTask, "SwapBufferTask",
 			mainGENERIC_STACK_SIZE * 2, NULL, 10,
 			&StateMachineTask) != pdPASS) {
 		PRINT_ERROR("Failed to create 'SwapBufferTask'");
 		goto err_swapbuffer_task;
 	}
 
-    if (xTaskCreate(vStateMachineTask, "StateMachineTask",
+	if (xTaskCreate(vStateMachineTask, "StateMachineTask",
 			mainGENERIC_STACK_SIZE * 2, NULL, 9,
 			&StateMachineTask) != pdPASS) {
 		PRINT_ERROR("Failed to create 'StateMachineTask'");
@@ -215,7 +210,7 @@ int main(int argc, char *argv[])
 			mainGENERIC_STACK_SIZE * 2, NULL, 6,
 			&CheckingInputsTask) != pdPASS) {
 		PRINT_ERROR("Failed to create 'CheckingInputsTask'");
-        //could use something like on master TASK_PRINT_ERROR
+		//could use something like on master TASK_PRINT_ERROR
 		goto err_checkinginputs_task;
 	}
 
@@ -226,16 +221,19 @@ int main(int argc, char *argv[])
 		goto err_blinkingbuttonsdraw_task;
 	}
 
-	if (xTaskCreate(vBlinkingButtonsDynamicTask, "BlinkingButtonsDynamicTask",
-			mainGENERIC_STACK_SIZE, NULL, mainGENERIC_PRIORITY,
+	if (xTaskCreate(vBlinkingButtonsDynamicTask,
+			"BlinkingButtonsDynamicTask", mainGENERIC_STACK_SIZE,
+			NULL, mainGENERIC_PRIORITY,
 			&BlinkingButtonsDynamicTask) != pdPASS) {
 		PRINT_ERROR("Failed to create 'BlinkingButtonsDynamicTask'");
 		goto err_blinkingbuttonsdynamic_task;
 	}
 
-	BlinkingButtonsStaticTask = xTaskCreateStatic(vBlinkingButtonsStaticTask,
-			"BlinkingButtonsStaticTask", STACK_SIZE_STATIC, NULL,
-			mainGENERIC_PRIORITY, xStack , &xTaskBuffer);
+	BlinkingButtonsStaticTask =
+		xTaskCreateStatic(vBlinkingButtonsStaticTask,
+				  "BlinkingButtonsStaticTask",
+				  STACK_SIZE_STATIC, NULL, mainGENERIC_PRIORITY,
+				  xStack, &xTaskBuffer);
 	if (!BlinkingButtonsStaticTask) {
 		PRINT_ERROR("Failed to create 'BlinkingButtonsStaticTask'");
 		goto err_blinkingbuttonsstatic_task;
@@ -248,8 +246,9 @@ int main(int argc, char *argv[])
 		goto err_buttonpresssemaphore_task;
 	}
 
-	if (xTaskCreate(vButtonPressNotificationTask, "ButtonPressNotificationTask",
-			mainGENERIC_STACK_SIZE, NULL, mainGENERIC_PRIORITY + 2,
+	if (xTaskCreate(vButtonPressNotificationTask,
+			"ButtonPressNotificationTask", mainGENERIC_STACK_SIZE,
+			NULL, mainGENERIC_PRIORITY + 2,
 			&ButtonPressNotificationTask) != pdPASS) {
 		PRINT_ERROR("Failed to create 'ButtonPressNotificationTask'");
 		goto err_buttonpressnotification_task;
@@ -304,10 +303,9 @@ int main(int argc, char *argv[])
 		goto err_exercise4_4_task;
 	}
 
-
-    //Suspending diffent tasks because they are managed 
-    //from inside the state machine task
-    vTaskSuspend(MovingShapesDisplayTask);
+	//Suspending diffent tasks because they are managed
+	//from inside the state machine task
+	vTaskSuspend(MovingShapesDisplayTask);
 	vTaskSuspend(BlinkingButtonsDrawTask);
 	vTaskSuspend(BlinkingButtonsDynamicTask);
 	vTaskSuspend(BlinkingButtonsStaticTask);
@@ -320,9 +318,7 @@ int main(int argc, char *argv[])
 	vTaskSuspend(Exercise4_3Task);
 	vTaskSuspend(Exercise4_4Task);
 
-
-    xTimerStart(deleteButtonCountNS, portMAX_DELAY);
-
+	xTimerStart(deleteButtonCountNS, portMAX_DELAY);
 
 	printf("Numer of tasks: %lu\n\n", uxTaskGetNumberOfTasks());
 	tumFUtilPrintTaskStateList();
@@ -332,7 +328,8 @@ int main(int argc, char *argv[])
 
 	return EXIT_SUCCESS;
 
-
+// Everything created before has to be deleted. The item calling the error
+// routin isn't deleted because it was not actually created.
 err_exercise4_4_task:
 	vTaskDelete(Exercise4_3Task);
 err_exercise4_3_task:
@@ -358,11 +355,11 @@ err_blinkingbuttonsdynamic_task:
 err_blinkingbuttonsdraw_task:
 	vTaskDelete(CheckingInputsTask);
 err_checkinginputs_task:
-    vTaskDelete(MovingShapesDisplayTask);
+	vTaskDelete(MovingShapesDisplayTask);
 err_movingshapesdisplay_task:
-    vTaskDelete(StateMachineTask);
+	vTaskDelete(StateMachineTask);
 err_statemachine_task:
-    vTaskDelete(SwapBufferTask);
+	vTaskDelete(SwapBufferTask);
 err_swapbuffer_task:
 	xTimerDelete(deleteButtonCountNS, 0);
 err_deletebuttoncountns_timer:
@@ -378,13 +375,13 @@ err_wakeTask4_3_semaphore:
 err_buttonspressed_semaphore:
 	vSemaphoreDelete(movingShapesDisplayTaskResumed.lock);
 err_movingShapesDisplayTaskResumed_lock:
-    vSemaphoreDelete(changeState.lock);
+	vSemaphoreDelete(changeState.lock);
 err_changestate_lock:
 	vSemaphoreDelete(buttonPressCountABCD.lock);
 err_buttonpresscountabcd_lock:
 	vSemaphoreDelete(ScreenLock);
-err_screen_lock: // Everything created before has to be deleted. The item calling the error
-	vSemaphoreDelete(buttons.lock); // routin doesn't because it was not actually created.
+err_screen_lock:
+	vSemaphoreDelete(buttons.lock);
 err_buttons_lock:
 	tumSoundExit();
 err_init_audio:
